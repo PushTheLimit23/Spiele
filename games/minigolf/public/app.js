@@ -321,7 +321,8 @@
       ctx.drawImage(renderHole(sh.hole), 0, 0);
       if (!anim.t0) anim.t0 = now;
       const pts = sh.path.length / 2;
-      const f = reduceMotion() ? pts - 1 : Math.min(pts - 1, (now - anim.t0) / (1000 / 60));
+      // Rollen immer zeigen – auch bei „Bewegung reduzieren“: das ist Spielinhalt, keine Deko.
+      const f = Math.min(pts - 1, (now - anim.t0) / (1000 / 60));
       const i = Math.floor(f), k = f - i;
       const j = Math.min(pts - 1, i + 1);
       const x = sh.path[i * 2] + (sh.path[j * 2] - sh.path[i * 2]) * k;
