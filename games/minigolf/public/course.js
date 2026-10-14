@@ -134,7 +134,7 @@
     const segs = segments(hole);
     const bumpers = hole.bumpers || [];
     let x = from[0], y = from[1];
-    const speed = MAX_SPEED * Math.pow(Math.max(0, Math.min(1, power)), 1.36);
+    const speed = MAX_SPEED * Math.pow(Math.max(0, Math.min(1, power)), 1.15);
     let vx = Math.cos(angle) * speed, vy = Math.sin(angle) * speed;
     const path = [r1(x), r1(y)];
     const [cx, cy] = hole.cup;
