@@ -300,7 +300,25 @@ input:focus { border-color: var(--brass); }
 
 .home-link { color: inherit; text-decoration: none; }
 
+/* ---------- Helles Umfeld wie im Hauptmenü (Brett bleibt Mahagoni) ---------- */
+:root {
+  --bg: #f4f1ea; --bg2: #ebe6da; --text: #1d1d1f; --muted: #6b6b70;
+  --brass: #9a6c1f; --brass-soft: rgba(154, 108, 31, .35);
+  --card: #ffffff; --line: #ddd8cc;
+  color-scheme: light;
+}
+body { background: var(--bg); }
+h1 { text-shadow: none; }
+input { background: #fff; }
+.card { box-shadow: 0 2px 10px rgba(30, 30, 40, .06); }
+.player { box-shadow: 0 1px 4px rgba(30, 30, 40, .04); }
+.player.active { box-shadow: 0 0 0 1px var(--brass-soft), 0 0 14px rgba(154, 108, 31, .15); }
+.player .off, .history .loss { color: #c75c48; }
+.history .win { color: #2e8a6e; }
+.status .must { color: #c0622a; }
+.toast { background: #2a2a2e; color: #fff; border-color: transparent; }
+
 /* Einladungs-Karte aus dem gemeinsamen Kern (core.js) – Dame-Farben */
-:root { --pf-card: #241a15; --pf-text: var(--text); --pf-muted: var(--muted); --pf-line: rgba(255, 230, 190, .18); --pf-bg: #140d0a;
-  --pf-accent: var(--brass); --pf-accent-text: #1c120c; --pf-title-font: 'Cormorant Garamond', Georgia, serif;
-  --pf-shadow: 0 10px 30px rgba(0, 0, 0, .5); --pf-veil: rgba(10, 5, 2, .45); --pf-veil-radius: 2px; }
+:root { --pf-card: #ffffff; --pf-text: var(--text); --pf-muted: var(--muted); --pf-line: var(--line); --pf-bg: var(--bg);
+  --pf-accent: #b48a3e; --pf-accent-text: #1c120c; --pf-title-font: 'Cormorant Garamond', Georgia, serif;
+  --pf-shadow: 0 10px 30px rgba(30, 20, 10, .2); --pf-veil: rgba(20, 10, 4, .35); --pf-veil-radius: 2px; }
