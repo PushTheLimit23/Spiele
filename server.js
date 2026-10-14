@@ -1,7 +1,7 @@
 // Spiele-Sammlung – gemeinsamer Server für alle Spiele
 //
 // Der Kern kümmert sich um alles, was jedes Spiel braucht:
-//   Räume per Link, Spieler-ID, Wiederverbinden, "Spiel ist voll", Revanche,
+//   Räume per Link, Spieler-ID, Wiederverbinden, "Spiel ist voll", Revanche, Live-Vorschau,
 //   Punktestand, Spielhistorie (Datei im Volume), Aufräumen, Umleitung alter Subdomains.
 // Jedes Spiel liegt in games/<id>/ und liefert nur:
 //   game.js  – Regeln auf dem Server (siehe games/README.md)
@@ -251,6 +251,16 @@ function handle(ws, m) {
     game.resign(room.state, seat, coreInfo(room));
     checkOver(room);
     return broadcast(room);
+  }
+
+  // Live-Vorschau (z. B. Zielen beim Minigolf): nur an den Mitspieler weiterreichen,
+  // ohne Spielzustand, ohne Speichern. Das Spiel muss das mit live: true erlauben.
+  if (m.type === 'live') {
+    if (!game.live || room.round === 0) return;
+    const other = room.seats[1 - seat];
+    const data = m.data && typeof m.data === 'object' ? m.data : null;
+    if (other && other.ws && JSON.stringify(data).length <= 512) send(other.ws, { type: 'live', seat, data });
+    return;
   }
 
   // Spielspezifische Aktion (Zug, Farbe wählen, Wort setzen …)

@@ -1,9 +1,9 @@
 # Spiele
 
-Online-Spiele für zwei per Link: **Vier Gewinnt, Dame, Mühle, Wortraten**. Ein Server, eine Adresse, eine Startseite.
+Online-Spiele für zwei per Link: **Vier Gewinnt, Dame, Mühle, Wortraten, Minigolf**. Ein Server, eine Adresse, eine Startseite.
 
 - Startseite: `spiele.deine-domain.de`
-- Spiele: `/vier/`, `/dame/`, `/muehle/`, `/wort/`
+- Spiele: `/vier/`, `/dame/`, `/muehle/`, `/wort/`, `/minigolf/`
 - Alte Adressen (`vier.…`, `dame.…`, `muehle.…`, `wort.…`) leiten automatisch weiter, wenn sie auf denselben Server zeigen.
 
 ## Aufbau

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Minigolf</title>
+  <meta name="theme-color" content="#eef2e6">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <a href="/" class="brand" aria-label="Alle Spiele" title="Alle Spiele">
+        <img src="favicon.svg" alt="" width="30" height="30">
+        <span>Minigolf</span>
+      </a>
+    </header>
+
+    <!-- Startseite -->
+    <section id="lobby" class="card lobby" hidden>
+      <h1>Minigolf spielen</h1>
+      <p class="sub" id="lobbyText">18 Bahnen zu zweit. Erstelle ein Spiel und schick den Link an einen Freund.</p>
+      <form id="nameForm" class="row">
+        <label class="sr" for="nameInput">Dein Name</label>
+        <input id="nameInput" maxlength="20" placeholder="Dein Name" autocomplete="nickname" required>
+        <button class="btn primary" id="startBtn" type="submit">Neues Spiel</button>
+      </form>
+      <details class="rules">
+        <summary>Spielregeln in 30 Sekunden</summary>
+        <ol>
+          <li><b>Schlagen:</b> Irgendwo aufs Spielfeld tippen, nach hinten ziehen wie bei einer Steinschleuder und loslassen. Je weiter du ziehst, desto fester der Schlag.</li>
+          <li><b>Reihenfolge:</b> Auf jeder Bahn spielt erst einer, bis sein Ball im Loch ist, dann der andere. Wer anfängt, wechselt von Bahn zu Bahn.</li>
+          <li><b>Zuschauen:</b> Wenn dein Mitspieler dran ist, siehst du live, wie er zielt und wohin sein Ball rollt.</li>
+          <li><b>Höchstens 6 Schläge</b> pro Bahn – wer dann nicht eingelocht hat, bekommt 7.</li>
+          <li><b>Wasser:</b> Der Schlag zählt, der Ball kommt zurück an die Stelle, von der du geschlagen hast. Sand bremst, Pfeile zeigen ein Gefälle.</li>
+          <li><b>Gewonnen</b> hat, wer nach 18 Bahnen weniger Schläge hat.</li>
+        </ol>
+      </details>
+      <div id="historyBox" class="history" hidden></div>
+    </section>
+
+    <!-- Spiel -->
+    <section id="game" class="game" hidden>
+      <div class="players">
+        <div class="player" id="p0"><span class="ball"></span><span class="pname"></span><span class="tot"></span></div>
+        <div class="vs" title="Siege über diesen Link"><b id="score">0 : 0</b><small id="tallyLabel">Siege</small></div>
+        <div class="player right" id="p1"><span class="ball"></span><span class="pname"></span><span class="tot"></span></div>
+      </div>
+
+      <div class="holebar">
+        <span id="holeInfo"></span>
+        <span id="strokeInfo" class="pill"></span>
+      </div>
+
+      <div class="course-wrap" id="courseWrap">
+        <canvas id="course" aria-label="Minigolfbahn"></canvas>
+        <div id="banner" class="banner" hidden></div>
+        <div id="result" class="overlay" hidden>
+          <div class="card small">
+            <h2 id="resultTitle"></h2>
+            <p id="resultText"></p>
+            <p class="tally-line" id="resultScore"></p>
+            <button class="btn primary" id="rematchBtn">Revanche</button>
+            <p class="hint" id="rematchHint"></p>
+            <button class="btn ghost" id="closeResult">Scorekarte ansehen</button>
+          </div>
+        </div>
+      </div>
+
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+
+      <div class="scorecard" id="scorecard"></div>
+
+      <div class="actions">
+        <button class="btn ghost" id="copyBtn">Link kopieren</button>
+        <button class="btn ghost" id="resignBtn">Aufgeben</button>
+        <button class="btn ghost" id="againBtn" hidden>Revanche</button>
+        <a class="btn ghost" href="./">Neues Spiel</a>
+      </div>
+    </section>
+
+    <section id="full" class="card lobby" hidden>
+      <h1>Spiel ist voll</h1>
+      <p class="sub">Auf dieser Runde spielen schon zwei.</p>
+      <a class="btn primary" href="./">Eigenes Spiel starten</a>
+    </section>
+  </main>
+
+  <script src="/core.js"></script>
+  <script src="course.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

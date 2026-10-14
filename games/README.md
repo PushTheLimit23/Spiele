@@ -24,6 +24,7 @@ module.exports = {
   title: 'Mein Spiel',
   blurb: 'Ein Satz für die Startseite.',
   rematch: 'both',      // 'both' (Standard): beide müssen zustimmen · 'any': ein Klick reicht
+  live: false,          // true: Browser darf Live-Vorschau an den Mitspieler senden (P.live, z. B. Zielen)
   needsBoth: true,      // Standard: Aktionen erst, wenn zwei Spieler da sind
 
   create()                      // Zustand, solange erst ein Spieler da ist
@@ -49,6 +50,7 @@ P.name / P.room / P.brokenLink   // Name, Raumcode, kaputter Link?
 P.newRoom(); P.link(); P.share(titel);
 P.connect({ onState, onError, onFull, onBadLink, onDisconnect, onOpen, joinData });
 P.act({ t: 'move', … }); P.rematch(); P.resign();
+P.live({ … });                   // Live-Vorschau, kommt beim Mitspieler als onLive(data, seat) an
 P.history(); P.renderHistory(element); P.toast(text);
 ```
 

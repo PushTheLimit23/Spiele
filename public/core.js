@@ -8,6 +8,7 @@
 //   P.connect({ onState(s) {...}, onError(msg) {...}, onFull() {...} });
 //   P.act({ col: 3 });      // Spielzug an den Server
 //   P.rematch(); P.resign();
+//   P.live({ … });          // Live-Vorschau an den Mitspieler (Spiel braucht live: true)
 (function () {
   const store = {
     get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
@@ -74,7 +75,7 @@
     @keyframes pf-fade{from{opacity:0}to{opacity:1}}`;
   document.head.appendChild(css);
 
-  const TITLES = { vier: 'Vier Gewinnt', dame: 'Dame', muehle: 'Mühle', wort: 'Wortraten' };
+  const TITLES = { vier: 'Vier Gewinnt', dame: 'Dame', muehle: 'Mühle', wort: 'Wortraten', minigolf: 'Minigolf' };
 
   function init(game) {
     let room = parseRoom(new URLSearchParams(location.search).get('r'));
@@ -151,6 +152,8 @@
       },
       act(a) { return api.send({ type: 'act', act: a }); },
       rematch() { return api.send({ type: 'rematch' }); },
+      // Live-Vorschau an den Mitspieler (z. B. Zielen). Still: kein Hinweis, wenn offline.
+      live(data) { if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'live', data })); },
       resign() { return api.send({ type: 'resign' }); },
 
       // Historie dieses Spielers (alle Spiele oder nur eines)
@@ -190,6 +193,7 @@
       ws.onmessage = (e) => {
         let m; try { m = JSON.parse(e.data); } catch { return; }
         if (m.type === 'state') handlers.onState && handlers.onState(m);
+        else if (m.type === 'live') handlers.onLive && handlers.onLive(m.data, m.seat);
         else if (m.type === 'error') {
           if (m.code === 'link') { stopped = true; handlers.onBadLink ? handlers.onBadLink(m.msg) : toast(m.msg); }
           else handlers.onError ? handlers.onError(m.msg) : toast(m.msg);
