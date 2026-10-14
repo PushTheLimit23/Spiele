@@ -142,20 +142,9 @@
       }
     }
 
-    const link = P.link();
-    $('share-link').value = link;
-    $('copy').addEventListener('click', async () => {
-      try { await navigator.clipboard.writeText(link); }
-      catch { $('share-link').select(); document.execCommand('copy'); }
-      $('copy').textContent = 'Kopiert ✓';
-      setTimeout(() => { $('copy').textContent = 'Kopieren'; }, 1500);
-    });
-    if (navigator.share) {
-      $('native-share').hidden = false;
-      $('native-share').addEventListener('click', () => {
-        P.share('Spielst du Vier Gewinnt mit mir?');
-      });
-    }
+    // Einladung wie bei Mühle: Karte über dem Brett, solange der Mitspieler fehlt
+    const invite = P.invite(document.querySelector('.board-wrap'));
+    $('copy-link').addEventListener('click', () => P.copyLink());
 
     const myTurn = () => state && state.status === 'playing' && state.turn === state.you;
 
@@ -213,12 +202,12 @@
         if (c !== mine) P.act({ t: 'color', color: c });
       });
 
-      $('share').hidden = s.players.length >= 2;
+      invite.show(s.players.length < 2);
 
       // Status-Text
       let text;
       const oppOffline = s.players[opp] && !s.players[opp].connected;
-      if (s.status === 'waiting') text = 'Warte auf Mitspieler – teile den Link.';
+      if (s.status === 'waiting') text = 'Warte auf deinen Mitspieler …';
       else if (s.status === 'playing') {
         text = s.turn === me ? 'Du bist dran.' : `${pName(opp)} ist dran …`;
         if (oppOffline) text += ` (${pName(opp)} ist offline)`;

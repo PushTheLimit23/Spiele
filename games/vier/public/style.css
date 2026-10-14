@@ -118,3 +118,8 @@ button:disabled { opacity: .5; cursor: default; }
 .history .res { font-weight: 700; white-space: nowrap; }
 .history .win { color: #1f9d55; }
 .history .loss { color: var(--danger); }
+
+/* Einladungs-Karte aus dem gemeinsamen Kern (core.js) – Vier-Gewinnt-Farben */
+:root { --pf-card: var(--card); --pf-text: var(--fg); --pf-muted: var(--muted); --pf-line: var(--line); --pf-bg: var(--bg);
+  --pf-accent: var(--accent); --pf-accent-text: #fff; --pf-title-font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; --pf-veil: rgba(20, 20, 30, .35); --pf-veil-radius: 16px; }
+.links { display: flex; justify-content: center; margin-top: 14px; }

@@ -30,13 +30,7 @@
   <section id="game" class="hidden">
     <p id="status" class="status"></p>
 
-    <div id="share" class="panel share hidden">
-      <p>Schick diesen Link an deinen Mitspieler:</p>
-      <div class="sharerow">
-        <input id="shareLink" readonly>
-        <button id="copyBtn" class="btn">Einladen</button>
-      </div>
-    </div>
+    <div id="inviteHost"></div>
 
     <div id="setForm" class="panel hidden">
       <label>Geheimes Wort
@@ -87,7 +81,7 @@
     </div>
   </section>
 </main>
-<p class="foot"><a href="./">Neues Spiel</a> · <a href="/">Alle Spiele</a></p>
+<p class="foot"><button id="copyLinkBtn" class="linkbtn hidden" type="button">Link kopieren</button><span id="copySep" class="hidden"> · </span><a href="./">Neues Spiel</a> · <a href="/">Alle Spiele</a></p>
 <script src="/core.js"></script>
 <script src="app.js"></script>
 </body>

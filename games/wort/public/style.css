@@ -105,3 +105,10 @@ input:focus { outline: none; border-color: var(--yellow); }
   .keyboard { gap: 4px; }
   .key { padding: 10px 0; font-size: .9rem; }
 }
+
+/* Einladungs-Karte aus dem gemeinsamen Kern (core.js) – Schultafel-Farben */
+:root { --pf-card: var(--slate-2); --pf-text: var(--chalk); --pf-muted: var(--chalk-dim); --pf-line: rgba(242, 239, 230, .3);
+  --pf-bg: var(--slate); --pf-accent: var(--yellow); --pf-accent-text: var(--slate); --pf-shadow: none;
+  --pf-title-font: 'Caveat', 'Segoe Print', 'Bradley Hand', cursive; }
+.pf-invite-card h2 { font-size: 1.8rem; }
+.linkbtn { background: none; border: none; padding: 0; font: inherit; color: var(--chalk-dim); text-decoration: underline; cursor: pointer; }

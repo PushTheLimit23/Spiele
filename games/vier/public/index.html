@@ -55,15 +55,6 @@
 
       <p id="status" class="status">Verbinde…</p>
 
-      <div id="share" class="card share" hidden>
-        <label for="share-link">Link für deinen Mitspieler</label>
-        <div class="row">
-          <input id="share-link" readonly>
-          <button id="copy" type="button">Kopieren</button>
-        </div>
-        <button id="native-share" type="button" class="secondary" hidden>Teilen …</button>
-      </div>
-
       <div class="board-wrap">
         <div id="preview" class="preview"></div>
         <div id="board" class="board"></div>
@@ -72,6 +63,10 @@
       <div class="color-row">
         <span class="muted small">Deine Farbe</span>
         <div class="swatches small" id="game-colors"></div>
+      </div>
+
+      <div class="links">
+        <button id="copy-link" type="button" class="secondary">Link kopieren</button>
       </div>
 
       <div id="after" class="after" hidden>

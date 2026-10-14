@@ -162,3 +162,7 @@ input:focus { outline: 2px solid var(--brass); outline-offset: 1px; }
   #p2 .hand { padding-left: 0; padding-right: 24px; }
   .vs { min-width: 48px; }
 }
+
+/* Einladungs-Karte aus dem gemeinsamen Kern (core.js) – Mühle-Farben */
+:root { --pf-card: var(--card); --pf-text: var(--text); --pf-muted: var(--muted); --pf-line: var(--line); --pf-bg: var(--bg);
+  --pf-accent: var(--accent); --pf-accent-text: var(--accent-text); --pf-shadow: var(--shadow); --pf-veil-radius: 4%; }

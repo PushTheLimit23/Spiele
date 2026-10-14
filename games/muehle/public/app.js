@@ -20,7 +20,7 @@
   const brokenInvite = PF.brokenLink;
   if (roomId && location.search !== `?r=${roomId}`) history.replaceState(null, '', `${location.pathname}?r=${roomId}`);
   if (brokenInvite) history.replaceState(null, '', location.pathname);
-  const roomLink = () => PF.link();
+  let invite; // Einladungs-Karte aus dem gemeinsamen Kern
 
   // ---------- Startseite ----------
   function showLobby() {
@@ -242,8 +242,7 @@
     $('status').innerHTML = st;
 
     // Einladung & Ergebnis
-    $('invite').hidden = !!S.players[opp];
-    $('linkText').textContent = roomLink();
+    invite.show(!S.players[opp]);
     $('resignBtn').hidden = !!g.winner || !S.players[opp];
     $('againBtn').hidden = !g.winner;
     if (!g.winner) resultDismissed = false;
@@ -305,17 +304,13 @@
     });
   }
 
-  function share() { PF.share('Spielst du eine Runde Mühle mit mir?'); }
-  async function copy() {
-    try { await navigator.clipboard.writeText(roomLink()); toast('Link kopiert ✓'); }
-    catch { prompt('Link kopieren:', roomLink()); }
-  }
+
 
   function startGame() {
     $('game').hidden = false;
     drawBoard();
-    $('shareBtn').onclick = share;
-    $('copyBtn').onclick = copy;
+    invite = PF.invite($('board').parentElement);
+    $('copyBtn').onclick = () => PF.copyLink();
     $('resignBtn').onclick = () => { if (confirm('Wirklich aufgeben?')) PF.resign(); };
     $('rematchBtn').onclick = $('againBtn').onclick = () => PF.rematch();
     $('closeResult').onclick = () => { resultDismissed = true; render(); };

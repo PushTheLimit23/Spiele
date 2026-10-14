@@ -44,10 +44,9 @@ function connect() {
 const send = (a) => P.act(a);
 
 // ---------- Eingaben ----------
-$('copyBtn').onclick = async () => {
-  const how = await P.share('Wortraten');
-  if (how === 'copied') { $('copyBtn').textContent = 'Kopiert ✓'; setTimeout(() => ($('copyBtn').textContent = 'Einladen'), 1500); }
-};
+// Einladung wie bei Mühle (hier im Seitenfluss, weil es vor Spielbeginn kein Brett gibt)
+const invite = P.invite($('inviteHost'), { inline: true });
+$('copyLinkBtn').onclick = () => P.copyLink();
 $('eyeBtn').onclick = () => { const i = $('wordInput'); i.type = i.type === 'password' ? 'text' : 'password'; };
 $('setBtn').onclick = () => { $('formError').textContent = ''; send({ t: 'setWord', word: $('wordInput').value, hint: $('hintInput').value }); };
 $('wordInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('setBtn').click(); });
@@ -74,13 +73,14 @@ document.addEventListener('keydown', e => {
 });
 
 // ---------- Darstellung ----------
-function hideAll() { ['share', 'setForm', 'play', 'over'].forEach(id => $(id).classList.add('hidden')); }
+function hideAll() { ['setForm', 'play', 'over'].forEach(id => $(id).classList.add('hidden')); invite.hide(); }
 
 function render() {
   const s = state, me = s.you, opp = 1 - me;
   const meP = s.players[me], oppP = s.players[opp];
   const iSet = me === s.setter;
   hideAll();
+  $('copyLinkBtn').classList.remove('hidden'); $('copySep').classList.remove('hidden');
 
   // Punktestand
   const sc = $('scores');
@@ -91,9 +91,8 @@ function render() {
 
   const status = $('status');
   if (s.phase === 'waiting') {
-    status.textContent = 'Warte auf Mitspieler …';
-    $('share').classList.remove('hidden');
-    $('shareLink').value = P.link();
+    status.textContent = 'Warte auf deinen Mitspieler …';
+    invite.show();
     return;
   }
   if (s.phase === 'setting') {

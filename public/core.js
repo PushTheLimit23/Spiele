@@ -54,13 +54,32 @@
   css.textContent = `.pf-toast{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom));transform:translate(-50%,30px);
     opacity:0;background:rgba(20,16,12,.92);color:#fff;font:600 .95rem/1.35 system-ui,sans-serif;padding:.6em 1.1em;border-radius:999px;
     max-width:calc(100vw - 32px);width:max-content;text-align:center;transition:.25s;pointer-events:none;z-index:1000}
-    .pf-toast.show{opacity:1;transform:translate(-50%,0)}`;
+    .pf-toast.show{opacity:1;transform:translate(-50%,0)}
+    /* Einladung (Vorbild: Mühle). Farben kommen aus dem Spiel über --pf-* Variablen. */
+    .pf-invite{position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;
+      background:var(--pf-veil,rgba(20,8,4,.35));backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);border-radius:var(--pf-veil-radius,12px);animation:pf-fade .25s ease}
+    .pf-invite.pf-inline{position:static;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;margin:14px 0}
+    .pf-invite[hidden]{display:none!important}
+    .pf-invite-card{max-width:340px;width:calc(100% - 32px);text-align:center;padding:22px 20px;box-sizing:border-box;
+      background:var(--pf-card,#fffaf3);color:var(--pf-text,#2a1a14);border:1px solid var(--pf-line,#dccdbb);border-radius:18px;
+      box-shadow:var(--pf-shadow,0 10px 30px rgba(60,25,10,.15));font-family:var(--pf-font,system-ui,-apple-system,'Segoe UI',sans-serif)}
+    .pf-invite.pf-inline .pf-invite-card{width:100%}
+    .pf-invite-card h2{font-family:var(--pf-title-font,Fraunces,Georgia,serif);font-size:1.45rem;line-height:1.2;margin:0 0 6px;color:inherit}
+    .pf-invite-card p{color:var(--pf-muted,#7a6458);margin:0 0 14px;font-size:1rem}
+    .pf-linkbox{background:var(--pf-linkbox,var(--pf-bg,#f3ece2));border:1px dashed var(--pf-line,#dccdbb);border-radius:10px;padding:10px;margin-bottom:12px;word-break:break-all;text-align:center}
+    .pf-linkbox code{font:.85rem/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--pf-text,#2a1a14)}
+    .pf-btn{font:inherit;font-weight:600;font-size:1rem;border-radius:12px;padding:12px 18px;cursor:pointer;width:100%;margin-top:4px;
+      border:1px solid transparent;background:var(--pf-accent,#7a2e18);color:var(--pf-accent-text,#fff6ea);transition:transform .08s ease,filter .2s}
+    .pf-btn:hover{filter:brightness(1.08)} .pf-btn:active{transform:scale(.97)}
+    @keyframes pf-fade{from{opacity:0}to{opacity:1}}`;
   document.head.appendChild(css);
+
+  const TITLES = { vier: 'Vier Gewinnt', dame: 'Dame', muehle: 'Mühle', wort: 'Wortraten' };
 
   function init(game) {
     let room = parseRoom(new URLSearchParams(location.search).get('r'));
     const rawRoom = new URLSearchParams(location.search).get('r');
-    let ws = null, retry = 0, stopped = false, handlers = {}, timer = null;
+    let ws = null, retry = 0, stopped = false, handlers = {}, timer = null, invite = null;
 
     const api = {
       game, id, esc, toast, store,
@@ -77,16 +96,47 @@
         return room;
       },
       link(r = room) { return `${location.origin}/${game}/?r=${r}`; },
+      title: TITLES[game] || 'Spiele',
 
       // Teilen: nur der Link, kein Text (Text + Link wird von manchen Apps zusammengeklebt)
-      async share(title) {
+      async share(title = `Spielst du eine Runde ${api.title} mit mir?`) {
         const url = api.link();
         if (navigator.share) {
           try { await navigator.share({ title, url }); return 'shared'; }
           catch (e) { if (e && e.name === 'AbortError') return 'aborted'; }
         }
-        try { await navigator.clipboard.writeText(url); toast('Link kopiert – schick ihn deinem Mitspieler.'); return 'copied'; }
+        return api.copyLink();
+      },
+      // "Link kopieren" – für den Knopf unter dem Brett
+      async copyLink() {
+        const url = api.link();
+        try { await navigator.clipboard.writeText(url); toast('Link kopiert ✓'); return 'copied'; }
         catch { prompt('Link kopieren:', url); return 'prompt'; }
+      },
+
+      // Einladungs-Karte wie bei Mühle: legt sich über das Brett, solange der Mitspieler fehlt.
+      // host = Element, über das sich die Karte legt (bekommt position:relative).
+      // { inline: true } zeigt die Karte stattdessen im Seitenfluss.
+      invite(host, opts = {}) {
+        if (!invite) {
+          invite = document.createElement('div');
+          invite.className = 'pf-invite' + (opts.inline ? ' pf-inline' : '');
+          invite.hidden = true;
+          invite.innerHTML = `<div class="pf-invite-card" role="dialog" aria-label="Mitspieler einladen">
+            <h2>Warte auf deinen Mitspieler</h2><p>Schick ihm diesen Link:</p>
+            <div class="pf-linkbox"><code></code></div>
+            <button type="button" class="pf-btn">Link teilen</button></div>`;
+          invite.querySelector('.pf-btn').addEventListener('click', () => api.share());
+          if (!opts.inline && getComputedStyle(host).position === 'static') host.style.position = 'relative';
+          host.appendChild(invite);
+        }
+        return {
+          show(on = true) {
+            if (on && room) invite.querySelector('code').textContent = api.link();
+            invite.hidden = !on || !room;
+          },
+          hide() { invite.hidden = true; },
+        };
       },
 
       connect(h) {

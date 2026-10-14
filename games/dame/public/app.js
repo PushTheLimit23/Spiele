@@ -34,7 +34,6 @@
     if (!roomId) roomId = P.newRoom();
     $('#lobby').classList.add('hidden');
     $('#game').classList.remove('hidden');
-    $('#shareBtn').classList.remove('hidden');
     connect();
   }
   $('#startBtn').addEventListener('click', start);
@@ -220,9 +219,9 @@
   $('#resignBtn').addEventListener('click', () => {
     if (confirm('Partie wirklich aufgeben?')) P.resign();
   });
-  $('#shareBtn').addEventListener('click', async () => {
-    P.share(`${name} fordert dich zu einer Partie Dame heraus!`);
-  });
+  // Einladung wie bei Mühle: Karte über dem Brett, solange der Mitspieler fehlt
+  const invite = P.invite($('#board'));
+  $('#copyLinkBtn').addEventListener('click', () => P.copyLink());
 
   // ---------- Anzeige ----------
   const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -257,10 +256,11 @@
     const s = state;
     const opp = s.players.find((p) => p.color !== s.you);
     const oppName = opp ? esc(opp.name) : 'Mitspieler';
+    invite.show(s.players.length < 2);
     $('#rematchBtn').classList.toggle('hidden', s.status !== 'over');
     $('#resignBtn').classList.toggle('hidden', s.status !== 'playing');
 
-    if (s.status === 'waiting') return setStatus('Warte auf Mitspieler – tippe oben auf <b>Einladen</b> und schick den Link.');
+    if (s.status === 'waiting') return setStatus('Warte auf deinen Mitspieler …');
     if (s.status === 'playing') {
       if (s.turn === s.you) {
         const must = legal.length && legal[0].captures.length;
@@ -304,7 +304,6 @@
   // ---------- Start ----------
   if (roomId && name) {
     $('#game').classList.remove('hidden');
-    $('#shareBtn').classList.remove('hidden');
     connect();
   } else showLobby();
 })();
