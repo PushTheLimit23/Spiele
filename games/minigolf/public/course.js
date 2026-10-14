@@ -8,7 +8,7 @@
   const W = 360, H = 640;
   const BALL = 6;          // Radius Ball
   const CUP = 10;          // Radius Loch
-  const MAX_SPEED = 560;   // Einheiten pro Sekunde bei voller Kraft
+  const MAX_SPEED = 645;   // Einheiten pro Sekunde bei voller Kraft
   const MAX_STROKES = 6;   // danach zählt die Bahn 7
   const DT = 1 / 240;      // Rechenschritt
   const SAMPLE = 4;        // jeder 4. Schritt landet in der Flugbahn (= 60 Bilder/s)
@@ -134,7 +134,7 @@
     const segs = segments(hole);
     const bumpers = hole.bumpers || [];
     let x = from[0], y = from[1];
-    const speed = MAX_SPEED * Math.pow(Math.max(0, Math.min(1, power)), 1.15);
+    const speed = MAX_SPEED * Math.pow(Math.max(0, Math.min(1, power)), 1.36);
     let vx = Math.cos(angle) * speed, vy = Math.sin(angle) * speed;
     const path = [r1(x), r1(y)];
     const [cx, cy] = hole.cup;
