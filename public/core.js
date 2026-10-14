@@ -9,6 +9,7 @@
 //   P.act({ col: 3 });      // Spielzug an den Server
 //   P.rematch(); P.resign();
 //   P.live({ … });          // Live-Vorschau an den Mitspieler (Spiel braucht live: true)
+//   Chat: erscheint automatisch als Knopf unten rechts. Abschalten mit P.connect({ chat: false, … }).
 (function () {
   const store = {
     get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
@@ -72,7 +73,43 @@
     .pf-btn{font:inherit;font-weight:600;font-size:1rem;border-radius:12px;padding:12px 18px;cursor:pointer;width:100%;margin-top:4px;
       border:1px solid transparent;background:var(--pf-accent,#7a2e18);color:var(--pf-accent-text,#fff6ea);transition:transform .08s ease,filter .2s}
     .pf-btn:hover{filter:brightness(1.08)} .pf-btn:active{transform:scale(.97)}
-    @keyframes pf-fade{from{opacity:0}to{opacity:1}}`;
+    @keyframes pf-fade{from{opacity:0}to{opacity:1}}
+    /* ---------- Chat (für alle Spiele). Farben über dieselben --pf-* Variablen wie die Einladung ---------- */
+    body.pf-has-chat .pf-toast{bottom:max(84px,calc(72px + env(safe-area-inset-bottom)))}
+    body.pf-has-chat{padding-bottom:max(76px,calc(64px + env(safe-area-inset-bottom)))}
+    .pf-chat-fab{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));z-index:900;
+      width:54px;height:54px;border-radius:50%;border:0;cursor:pointer;display:grid;place-items:center;
+      background:var(--pf-accent,#7a2e18);color:var(--pf-accent-text,#fff6ea);box-shadow:0 6px 18px rgba(0,0,0,.25);transition:transform .12s}
+    .pf-chat-fab:active{transform:scale(.94)} .pf-chat-fab svg{width:26px;height:26px}
+    .pf-chat-fab[hidden],.pf-chat[hidden]{display:none!important}
+    .pf-chat-badge{position:absolute;top:-3px;right:-3px;min-width:21px;height:21px;padding:0 6px;border-radius:999px;
+      background:#d9412f;color:#fff;font:700 12px/21px system-ui,sans-serif;box-shadow:0 0 0 2px var(--pf-card,#fff)}
+    .pf-chat{position:fixed;z-index:950;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));
+      width:min(360px,calc(100vw - 32px));height:min(480px,calc(100svh - 120px));display:flex;flex-direction:column;
+      background:var(--pf-card,#fffaf3);color:var(--pf-text,#2a1a14);border:1px solid var(--pf-line,#dccdbb);border-radius:18px;
+      box-shadow:0 18px 50px rgba(0,0,0,.28);overflow:hidden;font:15px/1.4 system-ui,-apple-system,'Segoe UI',sans-serif;animation:pf-up .18s ease}
+    @media (max-width:560px){.pf-chat{left:0;right:0;bottom:0;width:auto;height:min(62svh,520px);border-radius:18px 18px 0 0;border-bottom:0;
+      padding-bottom:env(safe-area-inset-bottom)}}
+    .pf-chat-head{display:flex;align-items:center;gap:8px;padding:10px 10px 10px 16px;border-bottom:1px solid var(--pf-line,#dccdbb)}
+    .pf-chat-head b{flex:1;font-size:1rem} .pf-chat-head small{color:var(--pf-muted,#7a6458);font-weight:400}
+    .pf-chat-x{border:0;background:none;color:var(--pf-muted,#7a6458);font-size:26px;line-height:1;width:40px;height:40px;cursor:pointer;border-radius:10px}
+    .pf-chat-list{flex:1;overflow-y:auto;padding:12px 12px 6px;display:flex;flex-direction:column;gap:6px;overscroll-behavior:contain}
+    .pf-chat-empty{margin:auto;color:var(--pf-muted,#7a6458);text-align:center;font-size:.92rem;padding:0 20px}
+    .pf-msg{max-width:80%;align-self:flex-start;display:flex;flex-direction:column}
+    .pf-msg.me{align-self:flex-end;align-items:flex-end}
+    .pf-msg span{padding:7px 11px;border-radius:16px 16px 16px 4px;background:var(--pf-linkbox,var(--pf-bg,#f3ece2));white-space:pre-wrap;overflow-wrap:anywhere}
+    .pf-msg.me span{background:var(--pf-accent,#7a2e18);color:var(--pf-accent-text,#fff6ea);border-radius:16px 16px 4px 16px}
+    .pf-msg.emoji span{background:none!important;font-size:2rem;line-height:1.1;padding:0 2px}
+    .pf-msg time{font-size:.7rem;color:var(--pf-muted,#7a6458);margin:2px 6px 0}
+    .pf-chat-quick{display:flex;gap:6px;padding:6px 12px;overflow-x:auto}
+    .pf-chat-quick button{flex:none;border:1px solid var(--pf-line,#dccdbb);background:none;color:inherit;border-radius:999px;padding:5px 11px;font:inherit;cursor:pointer}
+    .pf-chat-form{display:flex;gap:8px;padding:8px 12px 12px}
+    .pf-chat-form input{flex:1;min-width:0;font:inherit;font-size:16px;padding:10px 12px;border-radius:12px;
+      border:1px solid var(--pf-line,#dccdbb);background:var(--pf-bg,#fff);color:var(--pf-text,#2a1a14);outline:none}
+    .pf-chat-form input:focus{border-color:var(--pf-accent,#7a2e18)}
+    .pf-chat-form button{border:0;border-radius:12px;padding:0 14px;cursor:pointer;font:inherit;font-weight:600;
+      background:var(--pf-accent,#7a2e18);color:var(--pf-accent-text,#fff6ea)}
+    @keyframes pf-up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}`;
   document.head.appendChild(css);
 
   const TITLES = { vier: 'Vier Gewinnt', dame: 'Dame', muehle: 'Mühle', wort: 'Wortraten', minigolf: 'Minigolf' };
@@ -80,7 +117,7 @@
   function init(game) {
     let room = parseRoom(new URLSearchParams(location.search).get('r'));
     const rawRoom = new URLSearchParams(location.search).get('r');
-    let ws = null, retry = 0, stopped = false, handlers = {}, timer = null, invite = null;
+    let ws = null, retry = 0, stopped = false, handlers = {}, timer = null, invite = null, chat = null, lastState = null;
 
     const api = {
       game, id, esc, toast, store,
@@ -179,6 +216,85 @@
       },
     };
 
+
+    // ---------- Chat: schwebender Knopf + Fenster, in jedem Spiel automatisch ----------
+    // Nachrichten liegen nur im Speicher des Servers (letzte 50 pro Raum).
+    function makeChat() {
+      const QUICK = ['👍', '😂', '😮', '🙈', 'GG', 'Revanche?', 'Gut gespielt!'];
+      const seenKey = `spiele.chatSeen.${game}.${room}`;
+      let me = 0, msgs = [], open = false, unread = 0, oppName = 'Mitspieler';
+
+      const fab = document.createElement('button');
+      fab.type = 'button'; fab.className = 'pf-chat-fab'; fab.setAttribute('aria-label', 'Chat öffnen');
+      fab.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"/></svg><span class="pf-chat-badge" hidden></span>';
+      const box = document.createElement('section');
+      box.className = 'pf-chat'; box.hidden = true; box.setAttribute('aria-label', 'Chat');
+      box.innerHTML = `<div class="pf-chat-head"><b>Chat <small></small></b><button type="button" class="pf-chat-x" aria-label="Chat schließen">×</button></div>
+        <div class="pf-chat-list" role="log" aria-live="polite"></div>
+        <div class="pf-chat-quick">${QUICK.map((q) => `<button type="button">${esc(q)}</button>`).join('')}</div>
+        <form class="pf-chat-form" autocomplete="off"><input maxlength="300" placeholder="Nachricht …" enterkeyhint="send" aria-label="Nachricht"><button>Senden</button></form>`;
+      document.body.append(fab, box);
+      document.body.classList.add('pf-has-chat');
+      const $q = (s) => box.querySelector(s);
+      const list = $q('.pf-chat-list'), input = $q('input'), badge = fab.querySelector('.pf-chat-badge');
+
+      const isEmoji = (t) => /^(\p{Extended_Pictographic}|\p{Emoji_Component}|‍|️){1,6}$/u.test(t);
+      const time = (ts) => new Date(ts).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+      const seen = () => Number(store.get(seenKey, 0)) || 0;
+      function markSeen() { const last = msgs.length ? msgs[msgs.length - 1].id : 0; if (last > seen()) store.set(seenKey, last); }
+
+      function draw() {
+        list.innerHTML = msgs.length
+          ? msgs.map((m) => `<div class="pf-msg${m.seat === me ? ' me' : ''}${isEmoji(m.text) ? ' emoji' : ''}"><span>${esc(m.text)}</span><time>${time(m.ts)}</time></div>`).join('')
+          : `<p class="pf-chat-empty">Schreib ${esc(oppName)} etwas – oder schick ein 👍.</p>`;
+        list.scrollTop = list.scrollHeight;
+      }
+      function setUnread(n) {
+        unread = n;
+        badge.hidden = !n; badge.textContent = n > 9 ? '9+' : String(n);
+        const t = document.title.replace(/^\(\d+\+?\) /, ''); // Spiele ändern den Titel selbst (z. B. "Du bist dran")
+        document.title = n ? `(${n > 9 ? '9+' : n}) ${t}` : t;
+        fab.setAttribute('aria-label', n ? `Chat öffnen, ${n} neue Nachricht${n > 1 ? 'en' : ''}` : 'Chat öffnen');
+      }
+      function show(on) {
+        open = on; box.hidden = !on; fab.hidden = on;
+        if (on) { toastEl && toastEl.classList.remove('show'); setUnread(0); markSeen(); draw(); if (matchMedia('(hover: hover)').matches) input.focus(); }
+      }
+      function send(text) {
+        text = String(text || '').trim();
+        if (!text) return;
+        if (api.send({ type: 'chat', text })) input.value = '';
+      }
+
+      fab.addEventListener('click', () => show(true));
+      $q('.pf-chat-x').addEventListener('click', () => show(false));
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && open) show(false); });
+      $q('.pf-chat-form').addEventListener('submit', (e) => { e.preventDefault(); send(input.value); });
+      $q('.pf-chat-quick').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) send(b.textContent); });
+      document.addEventListener('visibilitychange', () => { if (!document.hidden && open) { setUnread(0); markSeen(); } });
+
+      return {
+        load(seat, all) {
+          me = seat; msgs = all || [];
+          if (open) { draw(); markSeen(); } else setUnread(msgs.filter((m) => m.seat !== me && m.id > seen()).length);
+        },
+        add(m) {
+          if (msgs.some((x) => x.id === m.id)) return;
+          msgs.push(m); if (msgs.length > 50) msgs.shift();
+          const mine = m.seat === me;
+          if (open && !document.hidden) { draw(); markSeen(); return; }
+          if (open) draw();
+          if (!mine) { setUnread(unread + 1); if (!open) toast(`${m.name}: ${m.text.length > 60 ? m.text.slice(0, 57) + '…' : m.text}`); }
+        },
+        players(state) {
+          // Namen des Mitspielers für den Kopf – aus dem Spielzustand, egal wie das Spiel ihn sortiert
+          const names = (state.players || []).filter(Boolean).map((p) => p.name);
+          const other = names.find((n) => n !== api.name) || names[1 - me];
+          if (other) { oppName = other; $q('.pf-chat-head small').textContent = '· mit ' + other; }
+        },
+      };
+    }
+
     function open() {
       clearTimeout(timer);
       if (stopped || !room) return;
@@ -192,7 +308,13 @@
       };
       ws.onmessage = (e) => {
         let m; try { m = JSON.parse(e.data); } catch { return; }
-        if (m.type === 'state') handlers.onState && handlers.onState(m);
+        if (m.type === 'state') { lastState = m; handlers.onState && handlers.onState(m); chat && chat.players(m); }
+        else if (m.type === 'chatlog') {
+          if (handlers.chat === false) return;
+          if (!chat) { chat = makeChat(); if (lastState) chat.players(lastState); }
+          chat.load(m.you, m.msgs);
+        }
+        else if (m.type === 'chat') chat && chat.add(m.msg, true);
         else if (m.type === 'live') handlers.onLive && handlers.onLive(m.data, m.seat);
         else if (m.type === 'error') {
           if (m.code === 'link') { stopped = true; handlers.onBadLink ? handlers.onBadLink(m.msg) : toast(m.msg); }

@@ -15,7 +15,7 @@ Danach noch eine Kachel in `public/index.html` (Startseite) ergänzen. Mehr ist 
 
 ## Was der Kern übernimmt
 
-Räume per Link, Spieler-ID und Name (gelten für alle Spiele), Wiederverbinden, „Spiel ist voll“, Revanche, Punktestand, Historie (Datei im Volume), Aufräumen alter Räume, robuster Einladungslink.
+Räume per Link, Spieler-ID und Name (gelten für alle Spiele), Chat im Spiel, Wiederverbinden, „Spiel ist voll“, Revanche, Punktestand, Historie (Datei im Volume), Aufräumen alter Räume, robuster Einladungslink.
 
 ## game.js – Schnittstelle
 
@@ -52,6 +52,7 @@ P.connect({ onState, onError, onFull, onBadLink, onDisconnect, onOpen, joinData 
 P.act({ t: 'move', … }); P.rematch(); P.resign();
 P.live({ … });                   // Live-Vorschau, kommt beim Mitspieler als onLive(data, seat) an
 P.history(); P.renderHistory(element); P.toast(text);
+// Chat: erscheint automatisch (Knopf unten rechts, Farben über --pf-*). Abschalten: P.connect({ chat: false, … })
 ```
 
 ## Testen

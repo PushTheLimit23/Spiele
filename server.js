@@ -214,7 +214,7 @@ function join(ws, m) {
   let room = rooms.get(key);
   if (!room) {
     room = { key, game, id, seats: [null, null], state: game.create(), round: 0,
-      score: [0, 0], draws: 0, rematch: new Set(), recorded: false, touched: Date.now() };
+      score: [0, 0], draws: 0, rematch: new Set(), recorded: false, touched: Date.now(), chat: [], chatSeq: 0 };
     rooms.set(key, room);
   }
   let seat = room.seats.findIndex((p) => p && p.id === pid);
@@ -230,6 +230,26 @@ function join(ws, m) {
   if (game.join) game.join(room.state, seat, m.data || {}, coreInfo(room));
   if (room.round === 0 && room.seats[0] && room.seats[1]) startRound(room);
   broadcast(room);
+  send(ws, { type: 'chatlog', you: seat, msgs: room.chat });
+}
+
+// ---------- Chat (für alle Spiele, nur im Speicher) ----------
+const CHAT_MAX = 50;          // so viele Nachrichten merkt sich ein Raum
+const CHAT_LEN = 300;         // Zeichen pro Nachricht
+const CHAT_BURST = 6;         // höchstens 6 Nachrichten …
+const CHAT_WINDOW = 10_000;   // … in 10 Sekunden pro Spieler
+
+function chat(ws, room, seat, m) {
+  const text = String(m.text || '').replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, '').replace(/\n{3,}/g, '\n\n').trim().slice(0, CHAT_LEN);
+  if (!text) return;
+  const now = Date.now();
+  ws.chatTimes = (ws.chatTimes || []).filter((t) => now - t < CHAT_WINDOW);
+  if (ws.chatTimes.length >= CHAT_BURST) return send(ws, { type: 'error', msg: 'Nicht so schnell – kurz durchatmen.' });
+  ws.chatTimes.push(now);
+  const msg = { id: ++room.chatSeq, seat, name: room.seats[seat].name, text, ts: now };
+  room.chat.push(msg);
+  if (room.chat.length > CHAT_MAX) room.chat.shift();
+  for (const p of room.seats) if (p && p.ws) send(p.ws, { type: 'chat', msg });
 }
 
 function handle(ws, m) {
@@ -238,6 +258,8 @@ function handle(ws, m) {
   if (!room || room.seats[seat]?.ws !== ws) return;
   room.touched = Date.now();
   const game = room.game;
+
+  if (m.type === 'chat') return chat(ws, room, seat, m);
 
   if (m.type === 'rematch') {
     if (!game.result(room.state)) return;
