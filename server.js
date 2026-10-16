@@ -219,7 +219,18 @@ function join(ws, m) {
   }
   let seat = room.seats.findIndex((p) => p && p.id === pid);
   if (seat < 0) seat = room.seats.findIndex((p) => !p);
-  if (seat < 0) return send(ws, { type: 'full' });
+  // Platz übernehmen: Wer den Link z. B. erst in einer App-Vorschau (Notion, WhatsApp …) geöffnet hat,
+  // sitzt dort schon mit einer anderen Geräte-ID. Im richtigen Browser darf er diesen Platz übernehmen.
+  const take = Number.isInteger(m.takeover) && m.takeover >= 0 && m.takeover <= 1 ? m.takeover : -1;
+  if (seat < 0 && take >= 0 && room.seats[take]) {
+    seat = take;
+    const prev = room.seats[seat];
+    if (prev.ws) { try { prev.ws.close(4001, 'Platz übernommen'); } catch {} }
+    prev.ws = null;
+  }
+  if (seat < 0) {
+    return send(ws, { type: 'full', seats: room.seats.map((p) => p && { name: p.name, online: !!(p.ws && p.ws.readyState === 1) }) });
+  }
 
   const old = room.seats[seat];
   if (old && old.ws && old.ws !== ws) { old.ws.replaced = true; try { old.ws.close(4000, 'Neu verbunden'); } catch {} }

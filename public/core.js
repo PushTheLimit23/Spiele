@@ -74,6 +74,13 @@
       border:1px solid transparent;background:var(--pf-accent,#7a2e18);color:var(--pf-accent-text,#fff6ea);transition:transform .08s ease,filter .2s}
     .pf-btn:hover{filter:brightness(1.08)} .pf-btn:active{transform:scale(.97)}
     @keyframes pf-fade{from{opacity:0}to{opacity:1}}
+    /* Hinweis-Karte über der ganzen Seite (Spiel voll / übernommen / App-Vorschau) */
+    .pf-gate{position:fixed;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px;
+      background:rgba(20,16,12,.45);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);animation:pf-fade .2s ease}
+    .pf-gate .pf-invite-card{max-width:360px}
+    .pf-gate .pf-btn{display:block;text-decoration:none;box-sizing:border-box;text-align:center}
+    .pf-btn.pf-sec{background:none;color:var(--pf-text,#2a1a14);border-color:var(--pf-line,#dccdbb)}
+    .pf-gate small{display:block;color:var(--pf-muted,#7a6458);margin-top:10px;font-size:.82rem;line-height:1.4}
     /* ---------- Chat (für alle Spiele). Farben über dieselben --pf-* Variablen wie die Einladung ---------- */
     body.pf-has-chat .pf-toast{bottom:max(84px,calc(72px + env(safe-area-inset-bottom)))}
     body.pf-has-chat{padding-bottom:max(76px,calc(64px + env(safe-area-inset-bottom)))}
@@ -117,6 +124,22 @@
   document.head.appendChild(css);
 
   const TITLES = { vier: 'Vier Gewinnt', dame: 'Dame', muehle: 'Mühle', wort: 'Wortraten', minigolf: 'Minigolf' };
+
+  // Läuft die Seite in einer App-Vorschau (Notion, Mail-App …) statt im Browser?
+  // Sicher erkennbar nur als eingebettetes Fenster (iframe) oder am App-Namen im User-Agent.
+  function embedded() {
+    let framed = false;
+    try { framed = window.self !== window.top; } catch { framed = true; }
+    return framed || /\bNotion\b|FBAN|FBAV|Instagram|LinkedInApp|\bLine\//i.test(navigator.userAgent || '');
+  }
+  function gate(html) {
+    document.querySelectorAll('.pf-gate').forEach((g) => g.remove());
+    const g = document.createElement('div');
+    g.className = 'pf-gate';
+    g.innerHTML = `<div class="pf-invite-card" role="dialog">${html}</div>`;
+    document.body.appendChild(g);
+    return g;
+  }
 
   function init(game) {
     let room = parseRoom(new URLSearchParams(location.search).get('r'));
@@ -353,13 +376,17 @@
 
     function open() {
       clearTimeout(timer);
-      if (stopped || !room) return;
+      if (stopped || !room || !previewOk) return;
       if (ws && ws.readyState <= 1) return; // läuft schon
       const proto = location.protocol === 'https:' ? 'wss' : 'ws';
       ws = new WebSocket(`${proto}://${location.host}/ws`);
       ws.onopen = () => {
         retry = 0;
-        ws.send(JSON.stringify({ type: 'join', game, room, id, name: api.name || 'Gast', data: handlers.joinData ? handlers.joinData() : {} }));
+        let takeover;
+        try { takeover = JSON.parse(sessionStorage.getItem('spiele.takeover') || 'null'); sessionStorage.removeItem('spiele.takeover'); } catch {}
+        const join = { type: 'join', game, room, id, name: api.name || 'Gast', data: handlers.joinData ? handlers.joinData() : {} };
+        if (takeover && takeover.room === room && takeover.game === game) join.takeover = takeover.seat;
+        ws.send(JSON.stringify(join));
         handlers.onOpen && handlers.onOpen();
       };
       ws.onmessage = (e) => {
@@ -375,9 +402,18 @@
         else if (m.type === 'error') {
           if (m.code === 'link') { stopped = true; handlers.onBadLink ? handlers.onBadLink(m.msg) : toast(m.msg); }
           else handlers.onError ? handlers.onError(m.msg) : toast(m.msg);
-        } else if (m.type === 'full') { stopped = true; handlers.onFull ? handlers.onFull() : toast('Dieses Spiel hat schon zwei Spieler.'); }
+        } else if (m.type === 'full') {
+          stopped = true;
+          handlers.onFull ? handlers.onFull() : toast('Dieses Spiel hat schon zwei Spieler.');
+          if (Array.isArray(m.seats)) offerTakeover(m.seats);
+        }
       };
       ws.onclose = (e) => {
+        if (e.code === 4001) { // Platz wurde in einem anderen Fenster übernommen (z. B. App-Vorschau -> Browser)
+          stopped = true;
+          gate(`<h2>Weiter im anderen Fenster</h2><p>Dieses Spiel läuft jetzt in deinem Browser weiter. Du kannst dieses Fenster schließen.</p>`);
+          return;
+        }
         if (stopped || e.code === 4000) return; // 4000 = in einem anderen Tab geöffnet
         handlers.onDisconnect && handlers.onDisconnect();
         timer = setTimeout(open, Math.min(8000, 500 * 2 ** retry++));
@@ -387,6 +423,33 @@
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && ws && ws.readyState > 1 && !stopped) { retry = 0; open(); }
     });
+
+    // "Spiel ist voll": Häufigste Ursache ist, dass man den Link vorher in einer App-Vorschau geöffnet hat.
+    function offerTakeover(seats) {
+      const btns = seats.map((p, i) => p && `<button type="button" class="pf-btn${p.online ? ' pf-sec' : ''}" data-seat="${i}">Ich bin ${esc(p.name)}${p.online ? '' : ' (nicht verbunden)'}</button>`).filter(Boolean).join('');
+      const g = gate(`<h2>Dieses Spiel ist schon voll</h2>
+        <p>Hast du den Link vorher in einer App geöffnet (z. B. Notion)? Dann sitzt du dort schon am Tisch und kannst hier weiterspielen:</p>
+        ${btns}
+        <a class="pf-btn pf-sec" href="${location.pathname}">Eigenes Spiel starten</a>
+        <small>Das andere Fenster wird dabei abgemeldet.</small>`);
+      g.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-seat]');
+        if (!b) return;
+        try { sessionStorage.setItem('spiele.takeover', JSON.stringify({ game, room, seat: Number(b.dataset.seat) })); } catch {}
+        location.reload();
+      });
+    }
+
+    // In einer App-Vorschau (zu klein zum Spielen): erst fragen, bevor wir einen Platz belegen.
+    let previewOk = !room || !embedded();
+    if (!previewOk) {
+      const g = gate(`<h2>${esc(api.title)}</h2>
+        <p>Diese Vorschau ist zum Spielen zu klein. Öffne das Spiel lieber im Browser.</p>
+        <a class="pf-btn" href="${esc(api.link())}" target="_blank" rel="noopener">Im Browser öffnen</a>
+        <button type="button" class="pf-btn pf-sec">Trotzdem hier spielen</button>
+        <small>Im Browser bekommst du einen eigenen Platz – die Vorschau belegt keinen.</small>`);
+      g.querySelector('button').addEventListener('click', () => { previewOk = true; g.remove(); open(); });
+    }
 
     return api;
   }
