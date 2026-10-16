@@ -127,7 +127,7 @@ input:focus { border-color: var(--brass); }
 /* ---------- Brett ---------- */
 .board-wrap { display: flex; justify-content: center; }
 .frame {
-  --size: max(280px, min(100vw - 32px, 600px, 100svh - 270px));
+  --size: max(280px, min(100vw - 32px - var(--pf-chat-w, 0px), 600px, 100svh - 270px));
   --lbl: calc(var(--size) * .055);
   width: var(--size);
   display: grid;

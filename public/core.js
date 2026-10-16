@@ -109,6 +109,10 @@
     .pf-chat-form input:focus{border-color:var(--pf-accent,#7a2e18)}
     .pf-chat-form button{border:0;border-radius:12px;padding:0 14px;cursor:pointer;font:inherit;font-weight:600;
       background:var(--pf-accent,#7a2e18);color:var(--pf-accent-text,#fff6ea)}
+    /* Tablet/Desktop: Chat dockt rechts an, wenn daneben Platz ist (Brett wird nicht überdeckt) */
+    .pf-chat.pf-dock{top:max(12px,env(safe-area-inset-top));bottom:max(12px,env(safe-area-inset-bottom));right:max(12px,env(safe-area-inset-right));
+      left:auto;width:var(--pf-dock-w,340px);height:auto;border-radius:18px;border-bottom:1px solid var(--pf-line,#dccdbb);padding-bottom:0;
+      box-shadow:0 8px 30px rgba(0,0,0,.18)}
     @keyframes pf-up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}`;
   document.head.appendChild(css);
 
@@ -256,8 +260,60 @@
         document.title = n ? `(${n > 9 ? '9+' : n}) ${t}` : t;
         fab.setAttribute('aria-label', n ? `Chat öffnen, ${n} neue Nachricht${n > 1 ? 'en' : ''}` : 'Chat öffnen');
       }
+      // ---- Andocken: freie Fläche rechts nutzen, statt das Brett zu überdecken ----
+      // 1) Rechts neben dem Spiel ist genug Platz  -> Chat dort einsetzen, nichts verschieben.
+      // 2) Links + rechts zusammen reichen          -> Spiel nach links rücken, Chat rechts daneben.
+      // 3) Zu wenig Platz (Handy, schmales Tablet)  -> wie bisher: Leiste von unten / schwebendes Fenster.
+      const MIN_CHAT = 280, MAX_CHAT = 400, MIN_GAME = 440, GAP = 24;
+      const root = document.documentElement;
+      function contentBox() {
+        let L = Infinity, R = -Infinity;
+        const W = innerWidth;
+        for (const el of document.querySelectorAll('body > *, body > * > *, body > * > * > *')) {
+          if (el === box || el === fab || box.contains(el) || /^(SCRIPT|STYLE|LINK|svg)$/i.test(el.tagName)) continue;
+          if (el.classList.contains('pf-toast')) continue;
+          const cs = getComputedStyle(el);
+          if (cs.position === 'fixed' || cs.display === 'none' || cs.visibility === 'hidden') continue;
+          const r = el.getBoundingClientRect();
+          if (r.width < 2 || r.height < 2 || r.width >= W - 2) continue; // volle Breite = nur Hintergrund/Leiste
+          L = Math.min(L, r.left); R = Math.max(R, r.right);
+        }
+        return R > L ? { L, R } : null;
+      }
+      function undock() {
+        box.classList.remove('pf-dock');
+        document.body.style.paddingRight = bodyPad;
+        root.style.removeProperty('--pf-chat-w');
+      }
+      const bodyPad = document.body.style.paddingRight;
+      let docked = '';
+      function layout() {
+        undock(); docked = '';
+        if (!open || innerWidth <= 560) return;
+        const c = contentBox();
+        if (!c) return;
+        const W = innerWidth, freeRight = W - c.R, gameW = c.R - c.L;
+        const sideW = Math.min(MAX_CHAT, freeRight - GAP);            // rechts daneben, nichts bewegt sich
+        const pushW = Math.min(MAX_CHAT, W - gameW - GAP * 2);        // Spiel rückt nach links, bleibt gleich groß
+        const squeezeW = Math.min(MAX_CHAT, W - MIN_GAME - GAP * 2);  // Spiel wird etwas schmaler
+        let w, mode;
+        if (sideW >= MIN_CHAT && sideW >= pushW - 40) { w = sideW; mode = 'side'; }
+        else if (pushW >= MIN_CHAT) { w = pushW; mode = 'push'; }
+        else if (squeezeW >= MIN_CHAT) { w = MIN_CHAT; mode = 'push'; }
+        else return;
+        root.style.setProperty('--pf-dock-w', w + 'px');
+        if (mode === 'push') {
+          root.style.setProperty('--pf-chat-w', (w + GAP) + 'px');
+          document.body.style.paddingRight = (w + GAP) + 'px';
+        }
+        box.classList.add('pf-dock'); docked = mode;
+      }
+      let raf = 0;
+      addEventListener('resize', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(layout); });
+
       function show(on) {
         open = on; box.hidden = !on; fab.hidden = on;
+        layout();
         if (on) { toastEl && toastEl.classList.remove('show'); setUnread(0); markSeen(); draw(); if (matchMedia('(hover: hover)').matches) input.focus(); }
       }
       function send(text) {
