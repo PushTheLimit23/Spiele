@@ -15,11 +15,20 @@
   if (roomId && location.search !== `?r=${roomId}`) history.replaceState(null, '', `${location.pathname}?r=${roomId}`);
   if (PF.brokenLink) history.replaceState(null, '', location.pathname);
   let invite;
+  let chosen = C.COURSES[PF.store.get('minigolf.course', 'klassik')] ? PF.store.get('minigolf.course', 'klassik') : 'klassik';
 
   // ---------- Startseite ----------
   function showLobby() {
     $('lobby').hidden = false;
     $('nameInput').value = PF.name;
+    // Platz wählen (nur wer das Spiel anlegt)
+    const pick = (c) => {
+      chosen = c; PF.store.set('minigolf.course', c);
+      document.querySelectorAll('#courseChoice button').forEach((b) => b.setAttribute('aria-checked', b.dataset.c === c ? 'true' : 'false'));
+    };
+    document.querySelectorAll('#courseChoice button').forEach((b) => { b.onclick = () => pick(b.dataset.c); });
+    pick(chosen);
+    $('courseChoice').hidden = !!roomId && !PF.brokenLink;
     if (PF.brokenLink) {
       $('lobbyText').textContent = 'Dieser Einladungslink ist unvollständig. Lass ihn dir bitte noch einmal schicken – oder starte hier eine eigene Runde.';
     } else if (roomId) {
@@ -147,6 +156,59 @@
       c.restore();
     }
 
+    // Hügel (heller, Höhenlinien) und Mulden (dunkler)
+    for (const hl of h.hills || []) {
+      const [x, y] = hl.c, up = hl.k > 0;
+      const g = c.createRadialGradient(x, y, 0, x, y, hl.r);
+      g.addColorStop(0, up ? 'rgba(255,255,230,.30)' : 'rgba(0,30,5,.42)');
+      g.addColorStop(0.7, up ? 'rgba(255,255,230,.10)' : 'rgba(0,30,5,.14)');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      c.beginPath(); c.arc(x, y, hl.r, 0, Math.PI * 2); c.fillStyle = g; c.fill();
+      c.lineWidth = 1.2;
+      c.strokeStyle = up ? 'rgba(255,255,255,.22)' : 'rgba(0,25,0,.28)';
+      for (const f of [0.3, 0.55, 0.8]) { c.beginPath(); c.arc(x, y, hl.r * f, 0, Math.PI * 2); c.stroke(); }
+    }
+
+    // Eis
+    for (const p of h.ice || []) {
+      const xs = p.map((q) => q[0]), ys = p.map((q) => q[1]);
+      c.save();
+      polyPath(c, p);
+      const ig = c.createLinearGradient(Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys));
+      ig.addColorStop(0, '#e6f6fb'); ig.addColorStop(1, '#bfe2ef');
+      c.fillStyle = ig; c.fill();
+      c.clip();
+      c.strokeStyle = 'rgba(255,255,255,.75)'; c.lineWidth = 1.4; c.lineCap = 'round';
+      let seed = 3;
+      const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+      for (let k = 0; k < 40; k++) {
+        const x = Math.min(...xs) + rnd() * (Math.max(...xs) - Math.min(...xs)), y = Math.min(...ys) + rnd() * (Math.max(...ys) - Math.min(...ys));
+        const l = 8 + rnd() * 22;
+        c.beginPath(); c.moveTo(x, y); c.lineTo(x + l, y - l * 0.45); c.stroke();
+      }
+      c.restore();
+      polyPath(c, p); c.lineWidth = 2; c.strokeStyle = 'rgba(120,180,205,.8)'; c.stroke();
+    }
+
+    // Förderbänder
+    for (const b of h.boosts || []) {
+      const xs = b.poly.map((q) => q[0]), ys = b.poly.map((q) => q[1]);
+      c.save();
+      polyPath(c, b.poly); c.fillStyle = '#4b4f57'; c.fill();
+      c.clip();
+      const ang = Math.atan2(b.a[1], b.a[0]);
+      c.strokeStyle = 'rgba(242,195,91,.9)'; c.lineWidth = 4; c.lineCap = 'round'; c.lineJoin = 'round';
+      const cy0 = (Math.min(...ys) + Math.max(...ys)) / 2, cx0 = (Math.min(...xs) + Math.max(...xs)) / 2;
+      const along = Math.abs(Math.cos(ang)) > 0.5 ? Math.max(...xs) - Math.min(...xs) : Math.max(...ys) - Math.min(...ys);
+      const across = Math.abs(Math.cos(ang)) > 0.5 ? Math.max(...ys) - Math.min(...ys) : Math.max(...xs) - Math.min(...xs);
+      c.translate(cx0, cy0); c.rotate(ang);
+      for (let d = -along / 2 + 10; d < along / 2; d += 22) {
+        c.beginPath(); c.moveTo(d - 6, -across * 0.32); c.lineTo(d + 4, 0); c.lineTo(d - 6, across * 0.32); c.stroke();
+      }
+      c.restore();
+      polyPath(c, b.poly); c.lineWidth = 2; c.strokeStyle = 'rgba(30,30,30,.6)'; c.stroke();
+    }
+
     // Sand
     for (const s of h.sand || []) {
       c.save();
@@ -203,6 +265,23 @@
       c.beginPath(); c.arc(x, y, r * 0.62, 0, Math.PI * 2); c.lineWidth = Math.max(2, r * 0.18); c.strokeStyle = 'rgba(255,255,255,.85)'; c.stroke();
       c.beginPath(); c.arc(x, y, r * 0.22, 0, Math.PI * 2); c.fillStyle = '#fff'; c.fill();
     }
+
+    // Portale: Eingang (Wirbel) und Ausgang (Ring) in derselben Farbe
+    const PCOL = ['#8b5cf6', '#14b8a6', '#f97316'];
+    (h.portals || []).forEach((p, n) => {
+      const col = PCOL[n % PCOL.length];
+      const [ax, ay] = p.a, [bx, by] = p.b, R = C.PORTAL;
+      const g = c.createRadialGradient(ax, ay, 1, ax, ay, R);
+      g.addColorStop(0, '#0b0614'); g.addColorStop(0.6, col); g.addColorStop(1, 'rgba(255,255,255,.6)');
+      c.beginPath(); c.arc(ax, ay, R, 0, Math.PI * 2); c.fillStyle = g; c.fill();
+      c.strokeStyle = 'rgba(255,255,255,.75)'; c.lineWidth = 1.5;
+      for (let k = 0; k < 3; k++) {
+        c.beginPath(); c.arc(ax, ay, R * 0.65, k * 2.09, k * 2.09 + 1.3); c.stroke();
+      }
+      c.beginPath(); c.arc(bx, by, R, 0, Math.PI * 2); c.fillStyle = 'rgba(255,255,255,.18)'; c.fill();
+      c.lineWidth = 3; c.strokeStyle = col; c.stroke();
+      c.beginPath(); c.arc(bx, by, R - 5, 0, Math.PI * 2); c.lineWidth = 1.5; c.setLineDash([3, 3]); c.stroke(); c.setLineDash([]);
+    });
 
     // Abschlag-Matte
     const [tx, ty] = h.tee;
@@ -290,6 +369,53 @@
     ctx.restore();
   }
 
+  // ---------- Uhr der beweglichen Hindernisse (Serverzeit, damit beide dasselbe sehen) ----------
+  let clockOffset = 0;
+  const CLOCK = 600;
+  const clockNow = () => (((Date.now() + clockOffset) / 1000) % CLOCK + CLOCK) % CLOCK;
+  const hasMovers = (gi) => !!(C.HOLES[gi].spinners || C.HOLES[gi].sliders);
+
+  function drawMovers(gi, t) {
+    const h = C.HOLES[gi];
+    if (!hasMovers(gi)) return;
+    const ms = C.movers(h, t);
+    ctx.save();
+    ctx.lineCap = 'round';
+    for (const m of ms) {
+      ctx.shadowColor = 'rgba(0,25,0,.45)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 3;
+      if (m.spin) {
+        ctx.strokeStyle = '#6b4a2b'; ctx.lineWidth = m.r * 2 + 3;
+        ctx.beginPath(); ctx.moveTo(m.x1, m.y1); ctx.lineTo(m.x2, m.y2); ctx.stroke();
+        ctx.shadowColor = 'transparent';
+        ctx.strokeStyle = '#f4efe2'; ctx.lineWidth = m.r * 2 - 1;
+        ctx.beginPath(); ctx.moveTo(m.x1, m.y1); ctx.lineTo(m.x2, m.y2); ctx.stroke();
+      } else {
+        ctx.strokeStyle = '#5c4210'; ctx.lineWidth = m.r * 2 + 2;
+        ctx.beginPath(); ctx.moveTo(m.x1, m.y1); ctx.lineTo(m.x2, m.y2); ctx.stroke();
+        ctx.shadowColor = 'transparent';
+        ctx.strokeStyle = '#f2c35b'; ctx.lineWidth = m.r * 2 - 2;
+        ctx.beginPath(); ctx.moveTo(m.x1, m.y1); ctx.lineTo(m.x2, m.y2); ctx.stroke();
+        // Warnstreifen
+        const L = Math.hypot(m.x2 - m.x1, m.y2 - m.y1), ux = (m.x2 - m.x1) / L, uy = (m.y2 - m.y1) / L;
+        ctx.strokeStyle = 'rgba(40,30,10,.75)'; ctx.lineWidth = 3; ctx.lineCap = 'butt';
+        for (let d = 8; d < L - 4; d += 10) {
+          const px = m.x1 + ux * d, py = m.y1 + uy * d;
+          ctx.beginPath(); ctx.moveTo(px - uy * (m.r - 2) - ux * 3, py + ux * (m.r - 2) - uy * 3);
+          ctx.lineTo(px + uy * (m.r - 2) + ux * 3, py - ux * (m.r - 2) + uy * 3); ctx.stroke();
+        }
+        ctx.lineCap = 'round';
+      }
+    }
+    ctx.shadowColor = 'transparent';
+    for (const sp of h.spinners || []) {
+      const [x, y] = sp.c;
+      const g = ctx.createRadialGradient(x - 2, y - 2, 1, x, y, 8);
+      g.addColorStop(0, '#c9a06a'); g.addColorStop(1, '#6b4a2b');
+      ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2); ctx.fillStyle = g; ctx.fill();
+    }
+    ctx.restore();
+  }
+
   // ---------- Zustand ----------
   let S = null;              // letzter Server-Zustand
   let lastShot = null;       // ID des zuletzt gezeigten Schlags
@@ -323,11 +449,12 @@
       const pts = sh.path.length / 2;
       // Rollen immer zeigen – auch bei „Bewegung reduzieren“: das ist Spielinhalt, keine Deko.
       const f = Math.min(pts - 1, (now - anim.t0) / (1000 / 60));
-      const i = Math.floor(f), k = f - i;
-      const j = Math.min(pts - 1, i + 1);
+      const i = Math.floor(f), j = Math.min(pts - 1, i + 1);
+      const k = sh.jumps && sh.jumps.includes(j) ? 0 : f - i; // Portal: springen statt gleiten
       const x = sh.path[i * 2] + (sh.path[j * 2] - sh.path[i * 2]) * k;
       const y = sh.path[i * 2 + 1] + (sh.path[j * 2 + 1] - sh.path[i * 2 + 1]) * k;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drawMovers(sh.hole, (sh.t0 || 0) + f / 60);
       const done = f >= pts - 1;
       if (done && !anim.endedAt) { anim.endedAt = now; showOutcome(sh); }
       const holed = sh.outcome === 'holed' && done;
@@ -345,9 +472,10 @@
       return;
     }
 
-    const hole = Math.min(S.hole, C.HOLES.length - 1);
+    const hole = S.holes[Math.min(S.hole, S.holes.length - 1)];
     ctx.drawImage(renderHole(hole), 0, 0);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (hasMovers(hole)) { drawMovers(hole, clockNow()); requestDraw(); }
     const showBall = full() && !S.over;
     const [bx, by] = S.ball;
     drawFlag(hole, showBall && Math.hypot(bx - C.HOLES[hole].cup[0], by - C.HOLES[hole].cup[1]) < 40);
@@ -382,14 +510,17 @@
     if (!S) return;
     const me = S.you, opp = 1 - me;
     // Während der Animation zeigen Kopfzeile und Karte den Stand VOR dem Schlag-Ende nicht extra – wir zeigen den aktuellen Stand.
-    const hole = Math.min(S.hole, C.HOLES.length - 1);
-    const showHole = anim ? anim.shot.hole : hole;
-    const H = C.HOLES[showHole];
-    $('holeInfo').innerHTML = `<b>Bahn ${showHole + 1}</b><span>/18 · ${esc(H.name)} · Par ${H.par}</span>`;
+    const n = S.holes.length;
+    const hole = Math.min(S.hole, n - 1);                 // Nummer auf diesem Platz
+    const showGi = anim ? anim.shot.hole : S.holes[hole]; // Bahn im Katalog
+    const showNo = S.holes.indexOf(showGi);
+    const H = C.HOLES[showGi];
+    $('holeInfo').innerHTML = `<b>Bahn ${showNo + 1}</b><span>/${n} · ${esc(H.name)} · Par ${H.par}</span>`;
+    $('holeInfo').title = C.COURSES[S.course].name;
 
     // Spielerleisten
     let parSoFar = [0, 0];
-    S.strokes.forEach((row, seat) => row.forEach((v, i) => { if (v != null) parSoFar[seat] += C.HOLES[i].par; }));
+    S.strokes.forEach((row, seat) => row.forEach((v, i) => { if (v != null) parSoFar[seat] += C.HOLES[S.holes[i]].par; }));
     for (const seat of [0, 1]) {
       const box = $(`p${seat}`), pl = S.players[seat];
       box.querySelector('.pname').innerHTML = pl ? `${esc(pl.name)}${seat === me ? ' <small>(du)</small>' : ''}` : '<small>wartet …</small>';
@@ -437,12 +568,15 @@
       $('resultTitle').textContent = S.winner === -1 ? 'Unentschieden' : S.winner === me ? 'Gewonnen! 🏆' : 'Verloren';
       $('resultText').textContent = S.resigned >= 0
         ? (S.resigned === me ? 'Du hast aufgegeben.' : `${nameOf(opp)} hat aufgegeben.`)
-        : `Du ${t[me]} · ${nameOf(opp)} ${t[opp]} Schläge (Par ${C.PAR})`;
+        : `Du ${t[me]} · ${nameOf(opp)} ${t[opp]} Schläge (${C.COURSES[S.course].name}, Par ${C.COURSES[S.course].par})`;
       $('resultScore').textContent = `Stand: Du ${sc[me]} : ${sc[opp]} ${nameOf(opp)}` + (S.draws ? ` · ${S.draws} Remis` : '');
       const iWant = S.rematch.includes(me), theyWant = S.rematch.includes(opp);
       $('rematchBtn').disabled = iWant;
       $('rematchBtn').textContent = $('againBtn').textContent = iWant ? 'Warte auf Zusage …' : 'Revanche';
       $('rematchHint').textContent = theyWant && !iWant ? `${nameOf(opp)} will eine Revanche!` : 'Bei einer Revanche fängt der andere an.';
+      const next = S.nextCourse || S.course;
+      $('nextCourse').innerHTML = Object.entries(C.COURSES).map(([id, c]) =>
+        `<button type="button" data-c="${id}" aria-checked="${id === next}" role="radio">${esc(c.name)}<small>${c.holes.length} Bahnen</small></button>`).join('');
     }
     requestDraw();
   }
@@ -453,16 +587,20 @@
       const idx = []; for (let i = from; i < to; i++) idx.push(i);
       const curCls = (i) => (!S.over && i === cur ? ' class="cur"' : '');
       const head = `<tr><th>Bahn</th>${idx.map((i) => `<th${curCls(i)}>${i + 1}</th>`).join('')}${last ? '<th>Σ</th>' : ''}</tr>`;
-      const par = `<tr class="par"><td>Par</td>${idx.map((i) => `<td${curCls(i)}>${C.HOLES[i].par}</td>`).join('')}${last ? `<td>${C.PAR}</td>` : ''}</tr>`;
+      const par = `<tr class="par"><td>Par</td>${idx.map((i) => `<td${curCls(i)}>${C.HOLES[S.holes[i]].par}</td>`).join('')}${last ? `<td>${C.COURSES[S.course].par}</td>` : ''}</tr>`;
       const rows = [0, 1].map((seat) => `<tr class="r${seat}"><td>${esc(name(seat))}</td>${idx.map((i) => {
         const v = S.strokes[seat][i];
-        const cls = v == null ? '' : v < C.HOLES[i].par ? 'under' : v > C.HOLES[i].par ? 'over' : '';
+        const pr = C.HOLES[S.holes[i]].par;
+        const cls = v == null ? '' : v < pr ? 'under' : v > pr ? 'over' : '';
         const extra = !S.over && i === cur ? ' cur' : '';
         return `<td class="${cls}${extra}">${v == null ? '' : v}</td>`;
       }).join('')}${last ? `<td class="sum">${S.totals[seat]}</td>` : ''}</tr>`).join('');
       return `<table><thead>${head}</thead><tbody>${par}${rows}</tbody></table>`;
     };
-    $('scorecard').innerHTML = half(0, 9, false) + half(9, 18, true);
+    const n = S.holes.length;
+    let html = `<p class="cardtitle">Platz ${esc(C.COURSES[S.course].name)} · ${n} Bahnen · Par ${C.COURSES[S.course].par}</p>`;
+    for (let f = 0; f < n; f += 9) html += half(f, Math.min(f + 9, n), f + 9 >= n);
+    $('scorecard').innerHTML = html;
   }
 
   // ---------- Zielen & Schlagen ----------
@@ -507,7 +645,7 @@
     const aim = myAim;
     myAim = null;
     sendLive(true);
-    if (shoot && aim && aim.p > 0.03 && myTurn()) PF.act({ t: 'shoot', a: aim.a, p: aim.p });
+    if (shoot && aim && aim.p > 0.03 && myTurn()) PF.act({ t: 'shoot', a: aim.a, p: aim.p, tm: +clockNow().toFixed(3) });
     render();
   };
   canvas.addEventListener('pointerup', endDrag(true));
@@ -518,6 +656,7 @@
 
   // ---------- Verbindung ----------
   function onState(m) {
+    if (m.now) clockOffset = m.now - Date.now();
     S = m;
     const sh = m.shot;
     if (lastShot === null) lastShot = sh ? sh.id : 0;            // beim Laden nichts nachspielen
@@ -540,7 +679,12 @@
     $('closeResult').onclick = () => { resultDismissed = true; render(); $('scorecard').scrollIntoView({ behavior: 'smooth', block: 'center' }); };
     resize();
     new ResizeObserver(resize).observe(canvas);
+    $('nextCourse').addEventListener('click', (e) => {
+      const b = e.target.closest('button');
+      if (b && S && S.over) PF.act({ t: 'course', c: b.dataset.c });
+    });
     PF.connect({
+      joinData: () => ({ course: chosen }),
       onState,
       onLive(data) {
         if (!S || S.turn === S.you) return;

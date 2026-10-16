@@ -1,7 +1,8 @@
-// Minigolf: Reihenfolge, Zuschauen (Live-Zielen + Flugbahn), Wasser, 18 Bahnen, Revanche, Aufgeben
+// Minigolf: Reihenfolge, Zuschauen (Live-Zielen + Flugbahn), Wasser, 18 Bahnen, Revanche, Aufgeben,
+// Plätze (Abenteuer/Marathon), Portale, bewegliche Hindernisse, Platzwechsel
 const C = require('../games/minigolf/public/course.js');
 
-module.exports = async ({ ok, get, pair, wait }) => {
+module.exports = async ({ ok, get, pair, wait, Player, room }) => {
   const [a, b] = await pair('minigolf');
   ok(a.state.you === 0 && b.state.you === 1 && a.state.hole === 0, 'Anna Platz 0, Ben Platz 1, Bahn 1');
   ok(a.state.turn === 0, 'Runde 1: Anna beginnt Bahn 1');
@@ -64,4 +65,37 @@ module.exports = async ({ ok, get, pair, wait }) => {
   ok((await get('/minigolf/')).body.includes('course.js'), 'Spielseite wird ausgeliefert');
   ok((await get('/')).body.includes('/minigolf/'), 'Kachel auf der Startseite');
   a.close(); b.close();
+
+  // ---------- Plätze: Abenteuer, Marathon, Wechsel bei Revanche ----------
+  const [c, d] = await pair('minigolf', { course: 'abenteuer' }, { course: 'marathon' });
+  ok(c.state.course === 'abenteuer' && c.state.holes.length === 18 && c.state.holes[0] === 18, 'Wer anlegt, wählt den Platz (Abenteuer); der Eingeladene ändert ihn nicht');
+  ok(typeof c.state.now === 'number', 'Server schickt seine Uhrzeit für die beweglichen Hindernisse');
+  // Bahn 1 Abenteuer = Teleporter: Schlag ins Portal
+  const tp = C.HOLES[18], P0 = tp.portals[0];
+  const ang = Math.atan2(P0.a[1] - tp.tee[1], P0.a[0] - tp.tee[0]);
+  await c.act({ t: 'shoot', a: ang, p: 0.62 });
+  ok(c.state.shot.jumps.length >= 1, `Portal: Ball wird teleportiert (Sprung bei Bild ${c.state.shot.jumps[0]})`);
+  // Windmühle: gleiche Startzeit = gleiche Flugbahn, andere Zeit = andere Flugbahn
+  const wm = C.HOLES.find((h) => h.name === 'Windmühle');
+  const r1 = C.simulate(wm, wm.tee, -Math.PI / 2, 0.8, 12.3), r2 = C.simulate(wm, wm.tee, -Math.PI / 2, 0.8, 12.3);
+  let differs = false;
+  for (let t = 0; t < 6 && !differs; t += 0.37) differs = C.simulate(wm, wm.tee, -Math.PI / 2, 0.8, t).path.join() !== r1.path.join();
+  ok(r1.path.join() === r2.path.join() && differs, 'Windmühle: Flugbahn hängt nur von der Startzeit ab (fair für beide)');
+  // Uhrzeit des Spielers wird übernommen, wenn sie plausibel ist
+  const before = c.state.shot.id;
+  const tm = ((c.state.now / 1000) % 600);
+  await c.act({ t: 'shoot', a: -Math.PI / 2, p: 0.3, tm: +tm.toFixed(3) });
+  if (c.state.shot.id === before) await d.act({ t: 'shoot', a: -Math.PI / 2, p: 0.3, tm: +tm.toFixed(3) });
+  ok(Math.abs(c.state.shot.t0 - tm) < 0.5, 'Zeitpunkt des Schlags kommt vom Spieler');
+  c.send({ type: 'act', act: { t: 'course', c: 'marathon' } }); await wait(80);
+  ok(/nach der Runde/.test(c.lastError()?.msg || ''), 'Platzwechsel erst nach der Runde');
+  c.send({ type: 'resign' }); await wait(120);
+  ok(c.state.summary === undefined && d.state.over, 'Runde beendet (Aufgabe)');
+  await d.act({ t: 'course', c: 'marathon' });
+  ok(c.state.nextCourse === 'marathon', 'Beide sehen den gewählten Platz für die Revanche');
+  await c.rematch(); await d.rematch();
+  ok(c.state.course === 'marathon' && c.state.holes.length === 36 && c.state.strokes[0].length === 36 && !c.state.over, 'Revanche auf dem Marathon-Platz mit 36 Bahnen');
+  const h2 = JSON.parse((await get(`/api/history?id=${d.id}&game=minigolf`)).body);
+  ok(h2.length === 1 && h2[0].result === 'win', 'Historie zählt die Abenteuer-Runde');
+  c.close(); d.close();
 };

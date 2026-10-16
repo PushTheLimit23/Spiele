@@ -6,6 +6,10 @@ Online-Spiele für zwei per Link: **Vier Gewinnt, Dame, Mühle, Wortraten, Minig
 - Spiele: `/vier/`, `/dame/`, `/muehle/`, `/wort/`, `/minigolf/`
 - Alte Adressen (`vier.…`, `dame.…`, `muehle.…`, `wort.…`) leiten automatisch weiter, wenn sie auf denselben Server zeigen.
 
+## Minigolf: zwei Plätze
+
+Klassik (18 Bahnen, Par 49), Abenteuer (18 Bahnen mit Eis, Förderbändern, Portalen, Hügeln/Mulden, Windmühlen und Schiebetoren, Par 61) und Marathon (alle 36). Wer das Spiel anlegt, wählt den Platz; nach jeder Runde kann für die Revanche gewechselt werden. Bahnen und Physik: `games/minigolf/public/course.js`.
+
 ## Aufbau
 
 ```

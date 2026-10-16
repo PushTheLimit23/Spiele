@@ -23,7 +23,12 @@
     <!-- Startseite -->
     <section id="lobby" class="card lobby" hidden>
       <h1>Minigolf spielen</h1>
-      <p class="sub" id="lobbyText">18 Bahnen zu zweit. Erstelle ein Spiel und schick den Link an einen Freund.</p>
+      <p class="sub" id="lobbyText">Minigolf zu zweit. Wähle einen Platz, erstelle ein Spiel und schick den Link an einen Freund.</p>
+      <div class="courses" id="courseChoice" role="radiogroup" aria-label="Platz">
+        <button type="button" role="radio" data-c="klassik"><b>Klassik</b><small>18 Bahnen · zum Einspielen</small></button>
+        <button type="button" role="radio" data-c="abenteuer"><b>Abenteuer</b><small>18 Bahnen · Windmühlen, Portale, Eis</small></button>
+        <button type="button" role="radio" data-c="marathon"><b>Marathon</b><small>alle 36 Bahnen</small></button>
+      </div>
       <form id="nameForm" class="row">
         <label class="sr" for="nameInput">Dein Name</label>
         <input id="nameInput" maxlength="20" placeholder="Dein Name" autocomplete="nickname" required>
@@ -37,7 +42,8 @@
           <li><b>Zuschauen:</b> Wenn dein Mitspieler dran ist, siehst du live, wie er zielt und wohin sein Ball rollt.</li>
           <li><b>Höchstens 6 Schläge</b> pro Bahn – wer dann nicht eingelocht hat, bekommt 7.</li>
           <li><b>Wasser:</b> Der Schlag zählt, der Ball kommt zurück an die Stelle, von der du geschlagen hast. Sand bremst, Pfeile zeigen ein Gefälle.</li>
-          <li><b>Gewonnen</b> hat, wer nach 18 Bahnen weniger Schläge hat.</li>
+          <li><b>Abenteuer-Platz:</b> Eis ist rutschig, Förderbänder schieben, Portale beamen den Ball zum Ring in derselben Farbe, Hügel lenken ab, Mulden halten fest. Windmühlen und Schiebetore bewegen sich – auf den richtigen Moment warten.</li>
+          <li><b>Gewonnen</b> hat, wer am Ende weniger Schläge hat.</li>
         </ol>
       </details>
       <div id="historyBox" class="history" hidden></div>
@@ -66,6 +72,7 @@
             <p class="tally-line" id="resultScore"></p>
             <button class="btn primary" id="rematchBtn">Revanche</button>
             <p class="hint" id="rematchHint"></p>
+            <div class="nextcourse" id="nextCourse" role="radiogroup" aria-label="Platz für die nächste Runde"></div>
             <button class="btn ghost" id="closeResult">Scorekarte ansehen</button>
           </div>
         </div>
