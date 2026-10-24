@@ -72,6 +72,8 @@
     .pf-linkbox code{font:.85rem/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--pf-text,#2a1a14)}
     .pf-btn{font:inherit;font-weight:600;font-size:1rem;border-radius:12px;padding:12px 18px;cursor:pointer;width:100%;margin-top:4px;
       border:1px solid transparent;background:var(--pf-accent,#7a2e18);color:var(--pf-accent-text,#fff6ea);transition:transform .08s ease,filter .2s}
+    .pf-btnrow{display:flex;gap:8px;margin-top:4px} .pf-btnrow .pf-btn{margin-top:0;flex:1;padding-left:10px;padding-right:10px}
+    .pf-btn.pf-sec{background:none;color:var(--pf-text,#2a1a14);border-color:var(--pf-line,#dccdbb)}
     .pf-btn:hover{filter:brightness(1.08)} .pf-btn:active{transform:scale(.97)}
     @keyframes pf-fade{from{opacity:0}to{opacity:1}}
     /* Hinweis-Karte über der ganzen Seite (Spiel voll / übernommen / App-Vorschau) */
@@ -132,6 +134,15 @@
     try { framed = window.self !== window.top; } catch { framed = true; }
     return framed || /\bNotion\b|FBAN|FBAV|Instagram|LinkedInApp|\bLine\//i.test(navigator.userAgent || '');
   }
+  async function copyText(text) {
+    try { if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(text); return true; } } catch {}
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;font-size:16px';
+      document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, text.length);
+      const ok = document.execCommand('copy'); ta.remove(); return ok;
+    } catch { return false; }
+  }
   function gate(html) {
     document.querySelectorAll('.pf-gate').forEach((g) => g.remove());
     const g = document.createElement('div');
@@ -175,8 +186,8 @@
       // "Link kopieren" – für den Knopf unter dem Brett
       async copyLink() {
         const url = api.link();
-        try { await navigator.clipboard.writeText(url); toast('Link kopiert ✓'); return 'copied'; }
-        catch { prompt('Link kopieren:', url); return 'prompt'; }
+        if (await copyText(url)) { toast('Link kopiert ✓'); return 'copied'; }
+        prompt('Link kopieren:', url); return 'prompt';
       },
 
       // Einladungs-Karte wie bei Mühle: legt sich über das Brett, solange der Mitspieler fehlt.
@@ -190,8 +201,17 @@
           invite.innerHTML = `<div class="pf-invite-card" role="dialog" aria-label="Mitspieler einladen">
             <h2>Warte auf deinen Mitspieler</h2><p>Schick ihm diesen Link:</p>
             <div class="pf-linkbox"><code></code></div>
-            <button type="button" class="pf-btn">Link teilen</button></div>`;
-          invite.querySelector('.pf-btn').addEventListener('click', () => api.share());
+            <div class="pf-btnrow">
+              <button type="button" class="pf-btn" data-act="share">Link teilen</button>
+              <button type="button" class="pf-btn pf-sec" data-act="copy">Link kopieren</button>
+            </div></div>`;
+          invite.querySelector('[data-act="share"]').addEventListener('click', () => api.share());
+          const copyBtn = invite.querySelector('[data-act="copy"]');
+          copyBtn.addEventListener('click', async () => {
+            if ((await api.copyLink()) !== 'copied') return;
+            copyBtn.textContent = 'Kopiert ✓';
+            clearTimeout(copyBtn._t); copyBtn._t = setTimeout(() => { copyBtn.textContent = 'Link kopieren'; }, 1800);
+          });
           if (!opts.inline && getComputedStyle(host).position === 'static') host.style.position = 'relative';
           host.appendChild(invite);
         }
