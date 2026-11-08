@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Halma</title>
+  <meta name="theme-color" content="#f4f1ea">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <a href="/" class="brand" aria-label="Alle Spiele" title="Alle Spiele">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><use href="#logo"/></svg>
+        <span>Halma</span>
+      </a>
+    </header>
+
+    <!-- Startseite -->
+    <section id="lobby" class="card lobby" hidden>
+      <h1>Halma spielen</h1>
+      <p class="sub" id="lobbyText">Erstelle ein Spiel und schick den Link an einen Freund.</p>
+      <form id="nameForm" class="row">
+        <label class="sr" for="nameInput">Dein Name</label>
+        <input id="nameInput" maxlength="20" placeholder="Dein Name" autocomplete="nickname" required>
+        <button class="btn primary" id="startBtn" type="submit">Neues Spiel</button>
+      </form>
+      <details class="rules">
+        <summary>Spielregeln in 30 Sekunden</summary>
+        <ol>
+          <li><b>Ziel:</b> Bring alle 10 Steine ins gegenüberliegende Dreieck. Bein beginnt.</li>
+          <li><b>Ziehen:</b> Ein Stein rückt auf ein freies Nachbarloch – in alle sechs Richtungen.</li>
+          <li><b>Springen:</b> Über einen direkt benachbarten Stein (deinen oder den deines Mitspielers) auf das freie Loch dahinter. Sprünge lassen sich zu Ketten verbinden; du darfst jederzeit aufhören. Es wird nichts geschlagen.</li>
+          <li><b>Im Ziel bleiben:</b> Ein Stein, der im Ziel-Dreieck angekommen ist, darf es nicht mehr verlassen.</li>
+          <li><b>Kein Zuparken:</b> Ist dein Ziel-Dreieck voll und steht mindestens ein eigener Stein darin, hast du gewonnen.</li>
+          <li><b>Remis</b> nach 300 Zügen je Spieler. Wer nicht ziehen kann, setzt aus.</li>
+        </ol>
+      </details>
+      <div id="historyBox" class="history" hidden>
+        <h2>Deine letzten Partien</h2>
+        <ul id="historyList"></ul>
+      </div>
+    </section>
+
+    <!-- Spiel -->
+    <section id="game" class="game" hidden>
+      <div class="players">
+        <div class="player" id="p1"><span class="chip white"></span><span class="pname"></span><span class="hand"></span></div>
+        <div class="vs" id="tally" title="Siege in dieser Runde"><b id="score">0 : 0</b><small id="tallyLabel">Siege</small></div>
+        <div class="player" id="p2"><span class="chip black"></span><span class="pname"></span><span class="hand"></span></div>
+      </div>
+
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+
+      <div class="board-wrap">
+        <svg id="board" viewBox="0 0 700 700" role="img" aria-label="Halmabrett"></svg>
+        <div id="result" class="overlay" hidden>
+          <div class="card small">
+            <h2 id="resultTitle"></h2>
+            <p id="resultText"></p>
+            <p class="tally-line" id="resultScore"></p>
+            <button class="btn primary" id="rematchBtn">Revanche</button>
+            <p class="hint" id="rematchHint"></p>
+            <button class="btn ghost" id="closeResult">Brett ansehen</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn ghost" id="copyBtn">Link kopieren</button>
+        <button class="btn ghost" id="resignBtn">Aufgeben</button>
+        <button class="btn ghost" id="againBtn" hidden>Revanche</button>
+        <a class="btn ghost" href="./">Neues Spiel</a>
+      </div>
+
+      <details class="rules">
+        <summary>Regeln</summary>
+        <ol>
+          <li>Alle 10 Steine ins gegenüberliegende Dreieck bringen.</li>
+          <li>Ziehen auf ein freies Nachbarloch oder über einen Nachbarstein springen – Sprungketten erlaubt, nichts wird geschlagen.</li>
+          <li>Steine im Ziel dürfen es nicht mehr verlassen. Ziel voll und mindestens ein eigener Stein darin = gewonnen.</li>
+        </ol>
+      </details>
+    </section>
+
+    <section id="full" class="card lobby" hidden>
+      <h1>Spiel ist voll</h1>
+      <p class="sub">An diesem Tisch sitzen schon zwei Spieler.</p>
+      <a class="btn primary" href="./">Eigenes Spiel starten</a>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="alert" hidden></div>
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="logo" viewBox="0 0 32 32">
+      <rect x="1" y="1" width="30" height="30" rx="6" fill="#6e2a17"/>
+      <path d="M16 3.5 19.6 9.8H26.8L23.2 16 26.8 22.2H19.6L16 28.5 12.4 22.2H5.2L8.8 16 5.2 9.8H12.4Z" fill="#e9cf9f" opacity=".9"/>
+      <circle cx="16" cy="8" r="2.4" fill="#3a2d26"/><circle cx="16" cy="24" r="2.4" fill="#f6efe1" stroke="#8c7652" stroke-width=".5"/>
+      <circle cx="12.6" cy="20.6" r="2.4" fill="#f6efe1" stroke="#8c7652" stroke-width=".5"/><circle cx="19.4" cy="11.4" r="2.4" fill="#3a2d26"/>
+    </symbol>
+  </svg>
+
+  <script src="/core.js"></script>
+  <script src="rules.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
