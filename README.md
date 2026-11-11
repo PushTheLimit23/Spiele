@@ -1,9 +1,9 @@
 # Spiele
 
-Online-Spiele für zwei per Link: **Vier Gewinnt, Dame, Mühle, Wortraten, Minigolf, Halma, Airhockey**. Ein Server, eine Adresse, eine Startseite.
+Online-Spiele für zwei per Link: **Vier Gewinnt, Dame, Mühle, Wortraten, Minigolf, Halma, Airhockey, Abalone**. Ein Server, eine Adresse, eine Startseite.
 
 - Startseite: `spiele.deine-domain.de`
-- Spiele: `/vier/`, `/dame/`, `/muehle/`, `/wort/`, `/minigolf/`, `/halma/`, `/airhockey/`
+- Spiele: `/vier/`, `/dame/`, `/muehle/`, `/wort/`, `/minigolf/`, `/halma/`, `/airhockey/`, `/abalone/`
 - Alte Adressen (`vier.…`, `dame.…`, `muehle.…`, `wort.…`) leiten automatisch weiter, wenn sie auf denselben Server zeigen.
 
 ## Minigolf: zwei Plätze

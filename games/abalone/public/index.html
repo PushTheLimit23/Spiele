@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Abalone</title>
+  <meta name="theme-color" content="#f4f1ea">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <a href="/" class="brand" aria-label="Alle Spiele" title="Alle Spiele">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><use href="#logo"/></svg>
+        <span>Abalone</span>
+      </a>
+    </header>
+
+    <!-- Startseite -->
+    <section id="lobby" class="card lobby" hidden>
+      <h1>Abalone spielen</h1>
+      <p class="sub" id="lobbyText">Erstelle ein Spiel und schick den Link an einen Freund.</p>
+      <form id="nameForm" class="row">
+        <label class="sr" for="nameInput">Dein Name</label>
+        <input id="nameInput" maxlength="20" placeholder="Dein Name" autocomplete="nickname" required>
+        <button class="btn primary" id="startBtn" type="submit">Neues Spiel</button>
+      </form>
+      <details class="rules">
+        <summary>Spielregeln in 30 Sekunden</summary>
+        <ol>
+          <li><b>Ziel:</b> Schieb 6 Kugeln deines Mitspielers über den Brettrand. Wenge beginnt.</li>
+          <li><b>Ziehen:</b> Bewege 1, 2 oder 3 eigene Kugeln, die in einer Reihe liegen, um ein Feld – in Reihenrichtung oder seitlich auf freie Felder.</li>
+          <li><b>Schieben (Sumito):</b> In Reihenrichtung darfst du Kugeln deines Mitspielers wegschieben, wenn du in der Überzahl bist: 3 gegen 2, 3 gegen 1 oder 2 gegen 1. Dahinter muss ein freies Feld oder der Rand sein.</li>
+          <li><b>Bedienung:</b> Tippe 1–3 eigene Kugeln an (bei drei reicht die erste und die letzte), dann einen der Pfeile.</li>
+          <li><b>Remis</b> nach 200 Zügen je Spieler.</li>
+        </ol>
+      </details>
+      <div id="historyBox" class="history" hidden>
+        <h2>Deine letzten Partien</h2>
+        <ul id="historyList"></ul>
+      </div>
+    </section>
+
+    <!-- Spiel -->
+    <section id="game" class="game" hidden>
+      <div class="players">
+        <div class="player" id="p1"><span class="chip black"></span><span class="pname"></span><span class="hand"></span></div>
+        <div class="vs" id="tally" title="Siege in dieser Runde"><b id="score">0 : 0</b><small id="tallyLabel">Siege</small></div>
+        <div class="player" id="p2"><span class="chip white"></span><span class="pname"></span><span class="hand"></span></div>
+      </div>
+
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+
+      <div class="board-wrap">
+        <svg id="board" viewBox="0 0 700 700" role="img" aria-label="Abalone-Brett"></svg>
+        <div id="result" class="overlay" hidden>
+          <div class="card small">
+            <h2 id="resultTitle"></h2>
+            <p id="resultText"></p>
+            <p class="tally-line" id="resultScore"></p>
+            <button class="btn primary" id="rematchBtn">Revanche</button>
+            <p class="hint" id="rematchHint"></p>
+            <button class="btn ghost" id="closeResult">Brett ansehen</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn ghost" id="copyBtn">Link kopieren</button>
+        <button class="btn ghost" id="resignBtn">Aufgeben</button>
+        <button class="btn ghost" id="againBtn" hidden>Revanche</button>
+        <a class="btn ghost" href="./">Neues Spiel</a>
+      </div>
+
+      <details class="rules">
+        <summary>Regeln</summary>
+        <ol>
+          <li>1–3 eigene Kugeln in einer Reihe antippen, dann einen Pfeil.</li>
+          <li>Schieben nur in Reihenrichtung und mit Überzahl (3:2, 3:1, 2:1). Seitlich nur auf freie Felder.</li>
+          <li>Wer 6 Kugeln seines Mitspielers vom Brett geschoben hat, gewinnt.</li>
+        </ol>
+      </details>
+    </section>
+
+    <section id="full" class="card lobby" hidden>
+      <h1>Spiel ist voll</h1>
+      <p class="sub">An diesem Tisch sitzen schon zwei Spieler.</p>
+      <a class="btn primary" href="./">Eigenes Spiel starten</a>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="alert" hidden></div>
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="logo" viewBox="0 0 32 32">
+      <rect x="1" y="1" width="30" height="30" rx="6" fill="#6e2a17"/>
+      <path d="M9 4.5h14L29.5 16 23 27.5H9L2.5 16Z" fill="#8f3c1d" stroke="#e9cf9f" stroke-opacity=".7"/>
+      <circle cx="12" cy="11" r="3.3" fill="#3a2d26"/><circle cx="20" cy="11" r="3.3" fill="#3a2d26"/><circle cx="16" cy="17" r="3.3" fill="#3a2d26"/>
+      <circle cx="12" cy="23" r="3.3" fill="#f6efe1"/><circle cx="20" cy="23" r="3.3" fill="#f6efe1"/>
+    </symbol>
+  </svg>
+
+  <script src="/core.js"></script>
+  <script src="rules.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
