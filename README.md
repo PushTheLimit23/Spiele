@@ -1,14 +1,18 @@
 # Spiele
 
-Online-Spiele für zwei per Link: **Vier Gewinnt, Dame, Mühle, Wortraten, Minigolf, Halma**. Ein Server, eine Adresse, eine Startseite.
+Online-Spiele für zwei per Link: **Vier Gewinnt, Dame, Mühle, Wortraten, Minigolf, Halma, Airhockey**. Ein Server, eine Adresse, eine Startseite.
 
 - Startseite: `spiele.deine-domain.de`
-- Spiele: `/vier/`, `/dame/`, `/muehle/`, `/wort/`, `/minigolf/`, `/halma/`
+- Spiele: `/vier/`, `/dame/`, `/muehle/`, `/wort/`, `/minigolf/`, `/halma/`, `/airhockey/`
 - Alte Adressen (`vier.…`, `dame.…`, `muehle.…`, `wort.…`) leiten automatisch weiter, wenn sie auf denselben Server zeigen.
 
 ## Minigolf: zwei Plätze
 
 Klassik (18 Bahnen, Par 49), Abenteuer (18 Bahnen mit Eis, Förderbändern, Portalen, Hügeln/Mulden, Windmühlen und Schiebetoren, Par 61) und Marathon (alle 36). Wer das Spiel anlegt, wählt den Platz; nach jeder Runde kann für die Revanche gewechselt werden. Bahnen und Physik: `games/minigolf/public/course.js`.
+
+## Airhockey: Echtzeit
+
+Der Server rechnet die Physik mit 60 Takten pro Sekunde (`game.tick`) und schickt jedem Spieler eine kleine Momentaufnahme. Der Browser schickt nur die Schlägerposition (`P.input`), zeigt den eigenen Schläger sofort an und rechnet den Puck ab der letzten Momentaufnahme kurz voraus (gleiche Physik: `games/airhockey/public/physics.js`).
 
 ## Aufbau
 

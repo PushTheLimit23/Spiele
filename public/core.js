@@ -125,7 +125,7 @@
     @keyframes pf-up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}`;
   document.head.appendChild(css);
 
-  const TITLES = { vier: 'Vier Gewinnt', dame: 'Dame', muehle: 'Mühle', wort: 'Wortraten', minigolf: 'Minigolf', halma: 'Halma' };
+  const TITLES = { vier: 'Vier Gewinnt', dame: 'Dame', muehle: 'Mühle', wort: 'Wortraten', minigolf: 'Minigolf', halma: 'Halma', airhockey: 'Airhockey' };
 
   // Läuft die Seite in einer App-Vorschau (Notion, Mail-App …) statt im Browser?
   // Sicher erkennbar nur als eingebettetes Fenster (iframe) oder am App-Namen im User-Agent.
@@ -238,6 +238,8 @@
       rematch() { return api.send({ type: 'rematch' }); },
       // Live-Vorschau an den Mitspieler (z. B. Zielen). Still: kein Hinweis, wenn offline.
       live(data) { if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'live', data })); },
+      // Echtzeit-Eingabe (Spiel braucht input()); der Server sendet dafür regelmäßig onTick
+      input(d) { if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'input', d })); },
       resign() { return api.send({ type: 'resign' }); },
 
       // Historie dieses Spielers (alle Spiele oder nur eines)
@@ -419,6 +421,7 @@
         }
         else if (m.type === 'chat') chat && chat.add(m.msg, true);
         else if (m.type === 'live') handlers.onLive && handlers.onLive(m.data, m.seat);
+        else if (m.type === 'tick') handlers.onTick && handlers.onTick(m.d);
         else if (m.type === 'error') {
           if (m.code === 'link') { stopped = true; handlers.onBadLink ? handlers.onBadLink(m.msg) : toast(m.msg); }
           else handlers.onError ? handlers.onError(m.msg) : toast(m.msg);

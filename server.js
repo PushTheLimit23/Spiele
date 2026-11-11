@@ -296,6 +296,17 @@ function handle(ws, m) {
     return;
   }
 
+  // Echtzeit-Eingabe (z. B. Schläger-Position beim Airhockey): wird nur gemerkt,
+  // die Rundsendung übernimmt der Takt. Das Spiel muss input() anbieten.
+  if (m.type === 'input') {
+    if (!game.input || room.round === 0 || !m.d || typeof m.d !== 'object') return;
+    const now = Date.now();
+    if (ws.lastInput && now - ws.lastInput < 8) return; // höchstens ~120 pro Sekunde
+    ws.lastInput = now;
+    try { game.input(room.state, seat, m.d); } catch (e) { console.error(`[${game.id}] input:`, e); }
+    return;
+  }
+
   // Spielspezifische Aktion (Zug, Farbe wählen, Wort setzen …)
   if (m.type === 'act') {
     const core = coreInfo(room);
@@ -337,6 +348,27 @@ setInterval(() => {
     try { ws.ping(); } catch {}
   }
 }, 30_000);
+
+// ---------- Echtzeit-Takt (nur für Spiele mit tick(), z. B. Airhockey) ----------
+// Pro Takt: Physik weiterrechnen, kleine Momentaufnahme an beide senden.
+// Meldet tick() ein Ereignis (Tor, Ende), gibt es zusätzlich den vollen Zustand.
+const TICK_HZ = 60;
+let lastTick = Date.now();
+setInterval(() => {
+  const now = Date.now();
+  const dt = Math.min(0.05, (now - lastTick) / 1000);
+  lastTick = now;
+  for (const room of rooms.values()) {
+    const game = room.game;
+    if (!game.tick || room.round === 0 || room.recorded) continue;
+    let ev;
+    try { ev = game.tick(room.state, dt, coreInfo(room)); }
+    catch (e) { console.error(`[${game.id}] tick:`, e); continue; }
+    const snap = JSON.stringify({ type: 'tick', d: game.snapshot(room.state) });
+    for (const p of room.seats) if (p && p.ws && p.ws.readyState === 1) p.ws.send(snap);
+    if (ev) { checkOver(room); broadcast(room); }
+  }
+}, 1000 / TICK_HZ);
 
 // Verlassene Räume aufräumen
 setInterval(() => {

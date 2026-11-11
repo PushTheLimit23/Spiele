@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Airhockey</title>
+  <meta name="theme-color" content="#f4f1ea">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <a href="/" class="brand" aria-label="Alle Spiele" title="Alle Spiele">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><use href="#logo"/></svg>
+        <span>Airhockey</span>
+      </a>
+    </header>
+
+    <!-- Startseite -->
+    <section id="lobby" class="card lobby" hidden>
+      <h1>Airhockey spielen</h1>
+      <p class="sub" id="lobbyText">Erstelle ein Spiel und schick den Link an einen Freund.</p>
+      <form id="nameForm" class="row">
+        <label class="sr" for="nameInput">Dein Name</label>
+        <input id="nameInput" maxlength="20" placeholder="Dein Name" autocomplete="nickname" required>
+        <button class="btn primary" id="startBtn" type="submit">Neues Spiel</button>
+      </form>
+      <details class="rules">
+        <summary>So geht's</summary>
+        <ol>
+          <li><b>Steuern:</b> Finger aufs Spielfeld legen und ziehen – am Computer einfach die Maus bewegen. Dein Schläger bleibt in deiner Hälfte.</li>
+          <li><b>Ziel:</b> Schieß den Puck ins Tor deines Mitspielers (oben). Dein Tor ist unten.</li>
+          <li><b>Gewonnen</b> hat, wer zuerst 7 Tore schießt. Nach einem Gegentor bekommst du den Puck.</li>
+          <li><b>Zeitregel:</b> Bleibt der Puck 7 Sekunden in einer Hälfte, bekommt ihn der andere.</li>
+          <li><b>Tipp:</b> Am besten im Hochformat und mit stabiler Verbindung (WLAN) spielen.</li>
+        </ol>
+      </details>
+      <div id="historyBox" class="history" hidden>
+        <h2>Deine letzten Partien</h2>
+        <ul id="historyList"></ul>
+      </div>
+    </section>
+
+    <!-- Spiel -->
+    <section id="game" class="game" hidden>
+      <div class="players">
+        <div class="player" id="pMe"><span class="chip"></span><span class="pname"></span><span class="goals">0</span></div>
+        <div class="vs" title="Siege über diesen Link"><b id="score">0 : 0</b><small id="tallyLabel">Siege</small></div>
+        <div class="player" id="pOpp"><span class="chip"></span><span class="pname"></span><span class="goals">0</span></div>
+      </div>
+
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+
+      <div class="table-wrap" id="tableWrap">
+        <canvas id="table" aria-label="Airhockey-Tisch"></canvas>
+        <div id="result" class="overlay" hidden>
+          <div class="card small">
+            <h2 id="resultTitle"></h2>
+            <p id="resultText"></p>
+            <p class="tally-line" id="resultScore"></p>
+            <button class="btn primary" id="rematchBtn">Revanche</button>
+            <p class="hint" id="rematchHint"></p>
+            <button class="btn ghost" id="closeResult">Tisch ansehen</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn ghost" id="copyBtn">Link kopieren</button>
+        <button class="btn ghost" id="resignBtn">Aufgeben</button>
+        <button class="btn ghost" id="againBtn" hidden>Revanche</button>
+        <a class="btn ghost" href="./">Neues Spiel</a>
+      </div>
+    </section>
+
+    <section id="full" class="card lobby" hidden>
+      <h1>Spiel ist voll</h1>
+      <p class="sub">An diesem Tisch stehen schon zwei Spieler.</p>
+      <a class="btn primary" href="./">Eigenes Spiel starten</a>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="alert" hidden></div>
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="logo" viewBox="0 0 32 32">
+      <rect x="1" y="1" width="30" height="30" rx="7" fill="#6e2a17"/>
+      <rect x="5" y="4" width="22" height="24" rx="5" fill="#f4f7fa"/>
+      <path d="M5 16h22" stroke="#c75c48" stroke-width="1.4"/>
+      <circle cx="16" cy="9" r="3.6" fill="#41459e"/><circle cx="16" cy="9" r="1.5" fill="#7c80d6"/>
+      <circle cx="13" cy="22.5" r="3.6" fill="#c75c48"/><circle cx="13" cy="22.5" r="1.5" fill="#f07d68"/>
+      <circle cx="19.5" cy="17.5" r="2.2" fill="#1d1d1f"/>
+    </symbol>
+  </svg>
+
+  <script src="/core.js"></script>
+  <script src="physics.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
