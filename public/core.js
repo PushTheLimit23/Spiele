@@ -125,7 +125,7 @@
     @keyframes pf-up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}`;
   document.head.appendChild(css);
 
-  const TITLES = { vier: 'Vier Gewinnt', dame: 'Dame', muehle: 'Mühle', wort: 'Wortraten', minigolf: 'Minigolf', halma: 'Halma', airhockey: 'Airhockey', abalone: 'Abalone' };
+  const TITLES = { vier: 'Vier Gewinnt', dame: 'Dame', muehle: 'Mühle', wort: 'Wortraten', minigolf: 'Minigolf', halma: 'Halma', airhockey: 'Airhockey', abalone: 'Abalone', carrom: 'Carrom' };
 
   // Läuft die Seite in einer App-Vorschau (Notion, Mail-App …) statt im Browser?
   // Sicher erkennbar nur als eingebettetes Fenster (iframe) oder am App-Namen im User-Agent.
