@@ -165,7 +165,7 @@ const send = (ws, msg) => { if (ws && ws.readyState === 1) ws.send(JSON.stringif
 function coreInfo(room) {
   return {
     round: room.round,
-    players: room.seats.map((p) => p && { name: p.name, online: !!(p.ws && p.ws.readyState === 1) }),
+    players: room.seats.map((p) => p && { name: p.name, online: !!(p.bot || (p.ws && p.ws.readyState === 1)), bot: !!p.bot }),
     score: room.score.slice(),
     draws: room.draws,
     rematch: [...room.rematch],
@@ -217,19 +217,26 @@ function join(ws, m) {
       score: [0, 0], draws: 0, rematch: new Set(), recorded: false, touched: Date.now(), chat: [], chatSeq: 0 };
     rooms.set(key, room);
   }
+  // Gegen den Computer: Der Computer setzt sich auf Platz 2, sobald der Raum neu ist.
+  // Das Spiel muss einen Computer-Spieler anbieten (game.bot), sonst bleibt es beim Spiel zu zweit.
+  const cpu = String(m.cpu || '');
+  if (cpu && game.bot && BOT_LEVELS[cpu] && room.round === 0 && !room.seats[1] && !room.bot && !room.seats.some((p) => p && p.id !== pid)) {
+    room.bot = { seat: 1, level: cpu };
+    room.seats[1] = { id: 'cpu:' + cpu, name: 'Computer', level: BOT_LEVELS[cpu], ws: null, bot: true };
+  }
   let seat = room.seats.findIndex((p) => p && p.id === pid);
   if (seat < 0) seat = room.seats.findIndex((p) => !p);
   // Platz übernehmen: Wer den Link z. B. erst in einer App-Vorschau (Notion, WhatsApp …) geöffnet hat,
   // sitzt dort schon mit einer anderen Geräte-ID. Im richtigen Browser darf er diesen Platz übernehmen.
   const take = Number.isInteger(m.takeover) && m.takeover >= 0 && m.takeover <= 1 ? m.takeover : -1;
-  if (seat < 0 && take >= 0 && room.seats[take]) {
+  if (seat < 0 && take >= 0 && room.seats[take] && !room.seats[take].bot) {
     seat = take;
     const prev = room.seats[seat];
     if (prev.ws) { try { prev.ws.close(4001, 'Platz übernommen'); } catch {} }
     prev.ws = null;
   }
   if (seat < 0) {
-    return send(ws, { type: 'full', seats: room.seats.map((p) => p && { name: p.name, online: !!(p.ws && p.ws.readyState === 1) }) });
+    return send(ws, { type: 'full', seats: room.seats.map((p) => p && !p.bot ? { name: p.name, online: !!(p.ws && p.ws.readyState === 1) } : null) });
   }
 
   const old = room.seats[seat];
@@ -241,7 +248,41 @@ function join(ws, m) {
   if (game.join) game.join(room.state, seat, m.data || {}, coreInfo(room));
   if (room.round === 0 && room.seats[0] && room.seats[1]) startRound(room);
   broadcast(room);
-  send(ws, { type: 'chatlog', you: seat, msgs: room.chat });
+  // Gegen den Computer gibt es keinen Chat
+  send(ws, room.bot ? { type: 'chatlog', you: seat, msgs: [], off: true } : { type: 'chatlog', you: seat, msgs: room.chat });
+  maybeBot(room);
+}
+
+// ---------- Computer-Gegner (für Spiele mit game.bot) ----------
+// game.bot.toMove(state, seat) -> ist der Computer dran?
+// game.bot.play(state, seat, level) -> Liste von Aktionen (wie vom Browser), z. B. [{t:'place',p:4},{t:'remove',p:9}]
+const BOT_LEVELS = { leicht: 'Leicht', mittel: 'Mittel', schwer: 'Schwer' };
+const BOT_THINK = 650;   // kurze "Denkpause", damit der Zug sichtbar ist
+const BOT_STEP = 700;    // Pause zwischen zwei Teilen eines Zuges (z. B. Setzen, dann Stein nehmen)
+
+function maybeBot(room) {
+  const b = room.bot, game = room.game;
+  if (!b || room.botBusy || room.round === 0 || game.result(room.state)) return;
+  if (!game.bot.toMove(room.state, b.seat)) return;
+  room.botBusy = true;
+  setTimeout(() => {
+    if (!rooms.has(room.key) || game.result(room.state) || !game.bot.toMove(room.state, b.seat)) { room.botBusy = false; return; }
+    let acts = [];
+    try { acts = game.bot.play(room.state, b.seat, b.level) || []; } catch (e) { console.error(`[${game.id}] Computer:`, e); }
+    playBot(room, acts);
+  }, BOT_THINK);
+}
+
+function playBot(room, acts) {
+  const a = acts.shift();
+  if (!a) { room.botBusy = false; return maybeBot(room); }
+  let err;
+  try { err = room.game.action(room.state, room.bot.seat, a, coreInfo(room)); } catch (e) { err = e.message; }
+  if (err) { console.error(`[${room.game.id}] Computer-Zug abgelehnt:`, err, a); room.botBusy = false; return; }
+  checkOver(room);
+  broadcast(room);
+  if (acts.length && !room.game.result(room.state)) setTimeout(() => playBot(room, acts), BOT_STEP);
+  else { room.botBusy = false; maybeBot(room); }
 }
 
 // ---------- Chat (für alle Spiele, nur im Speicher) ----------
@@ -275,8 +316,10 @@ function handle(ws, m) {
   if (m.type === 'rematch') {
     if (!game.result(room.state)) return;
     room.rematch.add(seat);
+    if (room.bot) room.rematch.add(room.bot.seat); // der Computer sagt immer ja
     if (room.rematch.size === 2 || (game.rematch === 'any' && room.seats[0] && room.seats[1])) startRound(room);
-    return broadcast(room);
+    broadcast(room);
+    return maybeBot(room);
   }
 
   if (m.type === 'resign') {
@@ -317,7 +360,8 @@ function handle(ws, m) {
     catch (e) { console.error(`[${game.id}] Fehler:`, e); err = 'Das hat nicht geklappt.'; }
     if (err) return send(ws, { type: 'error', msg: err });
     checkOver(room);
-    return broadcast(room);
+    broadcast(room);
+    return maybeBot(room);
   }
 }
 

@@ -154,6 +154,9 @@
 
   function init(game) {
     let room = parseRoom(new URLSearchParams(location.search).get('r'));
+    // Gegen den Computer? (steht im Link, damit Neuladen wieder ins selbe Spiel führt)
+    const CPU = ['leicht', 'mittel', 'schwer'];
+    let cpu = CPU.includes(new URLSearchParams(location.search).get('cpu')) ? new URLSearchParams(location.search).get('cpu') : '';
     const rawRoom = new URLSearchParams(location.search).get('r');
     let ws = null, retry = 0, stopped = false, handlers = {}, timer = null, invite = null, chat = null, lastState = null;
 
@@ -162,13 +165,16 @@
       // Wurde ein Link geöffnet, der kaputt ist? (dann zeigen Spiele einen Hinweis)
       brokenLink: !!rawRoom && !room,
       get room() { return room; },
+      get cpu() { return cpu; },
       get name() { return store.get('spiele.name', ''); },
       set name(v) { store.set('spiele.name', String(v || '').trim().slice(0, 20)); },
 
       // Neuen Raum anlegen und in die Adresszeile schreiben
-      newRoom() {
+      // newRoom({ cpu: 'leicht' | 'mittel' | 'schwer' }) startet ein Spiel gegen den Computer
+      newRoom(opts = {}) {
         room = rand(ROOM_LEN);
-        history.replaceState(null, '', `${location.pathname}?r=${room}`);
+        cpu = CPU.includes(opts.cpu) ? opts.cpu : '';
+        history.replaceState(null, '', `${location.pathname}?r=${room}${cpu ? '&cpu=' + cpu : ''}`);
         return room;
       },
       link(r = room) { return `${location.origin}/${game}/?r=${r}`; },
@@ -407,6 +413,7 @@
         let takeover;
         try { takeover = JSON.parse(sessionStorage.getItem('spiele.takeover') || 'null'); sessionStorage.removeItem('spiele.takeover'); } catch {}
         const join = { type: 'join', game, room, id, name: api.name || 'Gast', data: handlers.joinData ? handlers.joinData() : {} };
+        if (cpu) join.cpu = cpu;
         if (takeover && takeover.room === room && takeover.game === game) join.takeover = takeover.seat;
         ws.send(JSON.stringify(join));
         handlers.onOpen && handlers.onOpen();
@@ -415,7 +422,7 @@
         let m; try { m = JSON.parse(e.data); } catch { return; }
         if (m.type === 'state') { lastState = m; handlers.onState && handlers.onState(m); chat && chat.players(m); }
         else if (m.type === 'chatlog') {
-          if (handlers.chat === false) return;
+          if (handlers.chat === false || m.off) return;
           if (!chat) { chat = makeChat(); if (lastState) chat.players(lastState); }
           chat.load(m.you, m.msgs);
         }

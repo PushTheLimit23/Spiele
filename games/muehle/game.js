@@ -2,6 +2,7 @@
 // Die eigentlichen Zugregeln stehen in public/rules.js (läuft identisch im Browser).
 // Farben: 1 = Weiß, 2 = Schwarz. Spieler 1 hat in Runde 1 Weiß, bei jeder Revanche wird getauscht.
 const R = require('./public/rules.js');
+const Bot = require('./bot.js');
 
 const colorOf = (seat, round) => ((seat + Math.max(round, 1) - 1) % 2) + 1;
 const seatOf = (color, round) => (colorOf(0, round) === color ? 0 : 1);
@@ -9,6 +10,15 @@ const seatOf = (color, round) => (colorOf(0, round) === color ? 0 : 1);
 module.exports = {
   title: 'Mühle',
   blurb: 'Drei in einer Linie – nimm einen Stein.',
+
+  // Computer-Gegner: zieht wie ein Spieler, Stufen leicht / mittel / schwer
+  bot: {
+    toMove(s, seat) { return !s.game.winner && s.game.turn === colorOf(seat, s.round); },
+    play(s, seat, level) {
+      if (s.game.mustRemove) { const r = R.removable(s.game); return [{ t: 'remove', p: r[Math.floor(Math.random() * r.length)] }]; }
+      return Bot.choose(s.game, level) || [];
+    },
+  },
 
   create() { return { round: 0, game: R.newGame() }; },
   start(_prev, round) { return { round, game: R.newGame() }; },

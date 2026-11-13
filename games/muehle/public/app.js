@@ -31,7 +31,19 @@
     } else if (roomId) {
       $('lobbyText').textContent = 'Du wurdest zu einer Partie Mühle eingeladen. Wie heißt du?';
       $('startBtn').textContent = 'Mitspielen';
+      $('cpuBox').hidden = true; // wer eingeladen wurde, spielt gegen den Einladenden
     }
+    // Allein gegen den Computer
+    $('cpuBox').onclick = (e) => {
+      const b = e.target.closest('[data-cpu]');
+      if (!b) return;
+      const name = $('nameInput').value.trim().slice(0, 20);
+      if (!name) { $('nameInput').focus(); return toast('Gib zuerst deinen Namen ein.'); }
+      PF.name = name;
+      roomId = PF.newRoom({ cpu: b.dataset.cpu });
+      $('lobby').hidden = true;
+      startGame();
+    };
     $('nameForm').onsubmit = (e) => {
       e.preventDefault();
       const name = $('nameInput').value.trim().slice(0, 20);
@@ -311,6 +323,7 @@
     drawBoard();
     invite = PF.invite($('board').parentElement);
     $('copyBtn').onclick = () => PF.copyLink();
+    if (PF.cpu) $('copyBtn').hidden = true; // gegen den Computer gibt es niemanden einzuladen
     $('resignBtn').onclick = () => { if (confirm('Wirklich aufgeben?')) PF.resign(); };
     $('rematchBtn').onclick = $('againBtn').onclick = () => PF.rematch();
     $('closeResult').onclick = () => { resultDismissed = true; render(); };

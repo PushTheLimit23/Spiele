@@ -29,6 +29,14 @@
         <input id="nameInput" maxlength="20" placeholder="Dein Name" autocomplete="nickname" required>
         <button class="btn primary" id="startBtn" type="submit">Neues Spiel</button>
       </form>
+      <div class="cpu" id="cpuBox">
+        <p class="cpu-title">Oder allein gegen den Computer:</p>
+        <div class="cpu-levels" role="group" aria-label="Schwierigkeit">
+          <button type="button" class="btn ghost" data-cpu="leicht">Leicht</button>
+          <button type="button" class="btn ghost" data-cpu="mittel">Mittel</button>
+          <button type="button" class="btn ghost" data-cpu="schwer">Schwer</button>
+        </div>
+      </div>
       <details class="rules">
         <summary>Spielregeln in 30 Sekunden</summary>
         <ol>

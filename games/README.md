@@ -26,6 +26,11 @@ module.exports = {
   rematch: 'both',      // 'both' (Standard): beide müssen zustimmen · 'any': ein Klick reicht
   live: false,          // true: Browser darf Live-Vorschau an den Mitspieler senden (P.live, z. B. Zielen)
   needsBoth: true,      // Standard: Aktionen erst, wenn zwei Spieler da sind
+  // Computer-Gegner (optional, z. B. Mühle). Browser: P.newRoom({ cpu: 'leicht' | 'mittel' | 'schwer' })
+  bot: {
+    toMove(state, seat)         // ist der Computer (auf diesem Platz) dran?
+    play(state, seat, level)    // Liste von Aktionen wie aus dem Browser, z. B. [{t:'place',p:4},{t:'remove',p:9}]
+  },
   // Echtzeit (optional, z. B. Airhockey):
   tick(state, dt, core)         // 60× pro Sekunde; true zurückgeben bei Ereignis (Tor, Ende) -> voller Zustand
   snapshot(state)               // kleine Momentaufnahme, geht jeden Takt an beide (Browser: onTick)
