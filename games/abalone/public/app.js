@@ -175,12 +175,15 @@
         const [dx, dy] = vec(d), len = Math.hypot(dx, dy), ux = dx / len, uy = dy / len;
         const reach = Math.max(...pts.map(([x, y]) => (x - cx) * ux + (y - cy) * uy));
         const ax = cx + ux * (reach + U * 0.98), ay = cy + uy * (reach + U * 0.98);
+        // Unmögliche Richtungen: nur angedeutet und nicht anklickbar – sonst verdecken sie z. B. die
+        // Nachbarkugel, die man als zweite Kugel antippen will (der Tipp geht durch aufs Feld darunter)
         const a = el('g', { class: `arrow ${r.err ? 'bad' : ''} ${r.push && r.push.length ? 'push' : ''}` }, layer);
+        if (r.err) a.setAttribute('pointer-events', 'none');
         el('circle', { class: 'ab', cx: ax, cy: ay, r: 22 }, a);
         el('circle', { cx: ax, cy: ay, r: 34, fill: 'transparent' }, a); // größere Tippfläche
         const ang = Math.atan2(uy, ux) * 180 / Math.PI;
         el('path', { d: `M${ax - 9} ${ay - 9}L${ax + 8} ${ay}L${ax - 9} ${ay + 9}`, fill: 'none', stroke: '#3a1a0c', 'stroke-width': 4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', transform: `rotate(${ang} ${ax} ${ay})` }, a);
-        a.addEventListener('click', (e) => { e.stopPropagation(); if (r.err) return toast(r.err); move(d); });
+        if (!r.err) a.addEventListener('click', (e) => { e.stopPropagation(); move(d); });
       }
     }
     prevMoves = g.moves;

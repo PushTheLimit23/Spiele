@@ -166,7 +166,7 @@ input:focus { outline: 2px solid var(--brass); outline-offset: 1px; }
 .arrow { cursor: pointer; }
 .arrow .ab { fill: #ffd88a; stroke: #fff4d6; stroke-width: 2.5; }
 .arrow.push .ab { fill: #ff9a6a; }
-.arrow.bad { opacity: .28; cursor: default; }
+.arrow.bad { opacity: .22; }
 .offtray { display: inline-flex; gap: 2px; vertical-align: middle; }
 .offtray i { width: 8px; height: 8px; border-radius: 50%; display: block; box-shadow: inset 0 0 0 1px rgba(0,0,0,.25); background: var(--line); }
 .offtray i.on.c1 { background: radial-gradient(circle at 35% 30%, #8f7d70, #2f2520); }
