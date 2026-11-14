@@ -82,6 +82,10 @@
     .pf-gate .pf-invite-card{max-width:360px}
     .pf-gate .pf-btn{display:block;text-decoration:none;box-sizing:border-box;text-align:center}
     .pf-btn.pf-sec{background:none;color:var(--pf-text,#2a1a14);border-color:var(--pf-line,#dccdbb)}
+    .pf-cpu{margin-top:14px;padding-top:12px;border-top:1px dashed var(--pf-line,#dccdbb);text-align:left}
+    .pf-cpu-title{margin:0 0 8px;color:var(--pf-muted,#7a6458);font-size:.92rem}
+    .pf-cpu-levels{display:flex;gap:8px;flex-wrap:wrap} .pf-cpu-levels button{flex:1;min-width:84px;margin:0;width:auto;text-align:center;justify-content:center}
+    body.pf-vs-cpu [data-pf-invite-only]{display:none!important}
     .pf-gate small{display:block;color:var(--pf-muted,#7a6458);margin-top:10px;font-size:.82rem;line-height:1.4}
     /* ---------- Chat (für alle Spiele). Farben über dieselben --pf-* Variablen wie die Einladung ---------- */
     body.pf-has-chat .pf-toast{bottom:max(84px,calc(72px + env(safe-area-inset-bottom)))}
@@ -176,6 +180,26 @@
         cpu = CPU.includes(opts.cpu) ? opts.cpu : '';
         history.replaceState(null, '', `${location.pathname}?r=${room}${cpu ? '&cpu=' + cpu : ''}`);
         return room;
+      },
+      // Lobby-Kasten "Oder allein gegen den Computer" (nur für Spiele mit Computer-Gegner, nicht für Eingeladene).
+      // after = Element, hinter dem der Kasten erscheint; input = Namensfeld; onStart(level) startet das Spiel.
+      cpuBox(after, { input, onStart, btnClass = '' } = {}) {
+        if (room || !after) return null;
+        const box = document.createElement('div');
+        box.className = 'pf-cpu';
+        box.innerHTML = '<p class="pf-cpu-title">Oder allein gegen den Computer:</p><div class="pf-cpu-levels" role="group" aria-label="Schwierigkeit">' +
+          CPU.map((l) => `<button type="button" class="${esc(btnClass)}" data-cpu="${l}">${l[0].toUpperCase() + l.slice(1)}</button>`).join('') + '</div>';
+        box.onclick = (e) => {
+          const b = e.target.closest('[data-cpu]');
+          if (!b) return;
+          const n = input ? input.value.trim().slice(0, 20) : api.name;
+          if (!n) { if (input) input.focus(); return toast('Gib zuerst deinen Namen ein.'); }
+          api.name = n;
+          api.newRoom({ cpu: b.dataset.cpu });
+          onStart && onStart(b.dataset.cpu, n);
+        };
+        after.insertAdjacentElement('afterend', box);
+        return box;
       },
       link(r = room) { return `${location.origin}/${game}/?r=${r}`; },
       title: TITLES[game] || 'Spiele',
@@ -420,7 +444,7 @@
       };
       ws.onmessage = (e) => {
         let m; try { m = JSON.parse(e.data); } catch { return; }
-        if (m.type === 'state') { lastState = m; handlers.onState && handlers.onState(m); chat && chat.players(m); }
+        if (m.type === 'state') { lastState = m; document.body.classList.toggle('pf-vs-cpu', !!m.cpu); handlers.onState && handlers.onState(m); chat && chat.players(m); }
         else if (m.type === 'chatlog') {
           if (handlers.chat === false || m.off) return;
           if (!chat) { chat = makeChat(); if (lastState) chat.players(lastState); }

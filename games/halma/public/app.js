@@ -40,6 +40,8 @@
       $('lobby').hidden = true;
       startGame();
     };
+    // Allein gegen den Computer (Kasten aus dem gemeinsamen Kern)
+    PF.cpuBox($('nameForm'), { input: $('nameInput'), btnClass: 'btn ghost', onStart() { roomId = PF.room; $('lobby').hidden = true; startGame(); } });
     loadHistory();
   }
 

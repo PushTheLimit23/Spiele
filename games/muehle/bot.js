@@ -101,13 +101,14 @@ function choose(g, level) {
       const tmp = [];
       let alpha = -Infinity;
       for (const s of scored) {
-        const v = -search(s.t.next, 3 - me, depth - 1, -Infinity, -alpha + 1, 1, deadline, stats);
+        let v = -search(s.t.next, 3 - me, depth - 1, -Infinity, -alpha + 1, 1, deadline, stats);
         if (stats.timeout) break;
+        if (tmp.length && v <= alpha) v = alpha - 1; // nur Obergrenze: nie per Gleichstand/Zufall wählen
         tmp.push({ t: s.t, v });
         if (v > alpha) alpha = v;
       }
       if (stats.timeout) break;
-      scored = tmp.map((x) => ({ ...x, v: x.v + rnd() * 3 })).sort((a, b) => b.v - a.v);
+      scored = tmp.sort((a, b) => b.v - a.v);
       if (scored[0].v >= WIN - 50) break; // sicherer Sieg gefunden
     }
   }

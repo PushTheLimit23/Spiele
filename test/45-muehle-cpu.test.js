@@ -71,8 +71,8 @@ module.exports = async ({ ok, get, Player, room, wait, PORT }) => {
 
   // Spiele ohne Computer ignorieren cpu
   const r2 = room();
-  const D = new Player('dame', r2, 'dddddddd0003', 'Dora');
-  await new Promise((res) => { D.ws = new WebSocket(`ws://localhost:${PORT}/ws`); D.ws.on('open', () => D.ws.send(JSON.stringify({ type: 'join', game: 'dame', room: r2, id: D.id, name: 'Dora', cpu: 'mittel' }))); D.ws.on('message', (raw) => { const m = JSON.parse(raw); if (m.type === 'state') D.state = m; }); setTimeout(res, 200); });
-  ok(D.state && D.state.players.length === 1, 'Dame (ohne Computer-Gegner) wartet normal auf einen Mitspieler');
+  const D = new Player('carrom', r2, 'dddddddd0003', 'Dora');
+  await new Promise((res) => { D.ws = new WebSocket(`ws://localhost:${PORT}/ws`); D.ws.on('open', () => D.ws.send(JSON.stringify({ type: 'join', game: 'carrom', room: r2, id: D.id, name: 'Dora', cpu: 'mittel' }))); D.ws.on('message', (raw) => { const m = JSON.parse(raw); if (m.type === 'state') D.state = m; }); setTimeout(res, 200); });
+  ok(D.state && D.state.cpu === false && !JSON.stringify(D.state.players || []).includes('"Computer"'), 'Carrom (ohne Computer-Gegner) wartet normal auf einen Mitspieler');
   D.close();
 };

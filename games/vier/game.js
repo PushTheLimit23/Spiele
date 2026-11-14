@@ -31,6 +31,7 @@ function pickColor(s, seat, wanted) {
 }
 
 module.exports = {
+  bot: require('./bot.js')(),
   title: 'Vier Gewinnt',
   blurb: 'Vier in einer Reihe gewinnt.',
   needsBoth: false, // Farbe darf man schon vor dem Mitspieler wählen

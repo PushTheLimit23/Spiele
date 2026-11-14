@@ -25,6 +25,12 @@
       $('#lobbyText').textContent = 'Du wurdest zu einer Partie Dame eingeladen. Wie heißt du?';
       $('#startBtn').textContent = 'Mitspielen';
     }
+    if (!$('#lobby .pf-cpu')) P.cpuBox($('#startBtn'), { input: nameInput, btnClass: 'ghost', onStart(_l, n) {
+      name = n; roomId = P.room;
+      $('#lobby').classList.add('hidden');
+      $('#game').classList.remove('hidden');
+      connect();
+    } });
     setTimeout(() => nameInput.focus(), 50);
   }
   function start() {

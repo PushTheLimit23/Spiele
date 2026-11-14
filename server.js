@@ -124,7 +124,7 @@ const server = http.createServer((req, res) => {
 
   if (p === '/api/games') {
     res.writeHead(200, { 'Content-Type': MIME['.json'], 'Cache-Control': 'no-store' });
-    return res.end(JSON.stringify(Object.values(GAMES).map((g) => ({ id: g.id, title: g.title, blurb: g.blurb || '' }))));
+    return res.end(JSON.stringify(Object.values(GAMES).map((g) => ({ id: g.id, title: g.title, blurb: g.blurb || '', cpu: !!g.bot }))));
   }
 
   if (p === '/api/history') {
@@ -176,7 +176,7 @@ function coreInfo(room) {
 function broadcast(room) {
   const core = coreInfo(room);
   room.seats.forEach((p, seat) => {
-    if (p && p.ws) send(p.ws, { type: 'state', room: room.id, ...room.game.view(room.state, seat, core) });
+    if (p && p.ws) send(p.ws, { type: 'state', room: room.id, cpu: !!room.bot, ...room.game.view(room.state, seat, core) });
   });
 }
 
@@ -220,9 +220,11 @@ function join(ws, m) {
   // Gegen den Computer: Der Computer setzt sich auf Platz 2, sobald der Raum neu ist.
   // Das Spiel muss einen Computer-Spieler anbieten (game.bot), sonst bleibt es beim Spiel zu zweit.
   const cpu = String(m.cpu || '');
+  let newBot = false;
   if (cpu && game.bot && BOT_LEVELS[cpu] && room.round === 0 && !room.seats[1] && !room.bot && !room.seats.some((p) => p && p.id !== pid)) {
     room.bot = { seat: 1, level: cpu };
     room.seats[1] = { id: 'cpu:' + cpu, name: 'Computer', level: BOT_LEVELS[cpu], ws: null, bot: true };
+    newBot = true;
   }
   let seat = room.seats.findIndex((p) => p && p.id === pid);
   if (seat < 0) seat = room.seats.findIndex((p) => !p);
@@ -246,6 +248,8 @@ function join(ws, m) {
   room.touched = Date.now();
 
   if (game.join) game.join(room.state, seat, m.data || {}, coreInfo(room));
+  // Der Computer "tritt" nach dem Menschen bei – so bekommt z. B. bei Vier Gewinnt der Mensch seine Wunschfarbe
+  if (newBot && game.join) game.join(room.state, 1, {}, coreInfo(room));
   if (room.round === 0 && room.seats[0] && room.seats[1]) startRound(room);
   broadcast(room);
   // Gegen den Computer gibt es keinen Chat

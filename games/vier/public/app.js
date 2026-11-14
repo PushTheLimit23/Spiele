@@ -70,6 +70,8 @@
       P.name = n;
       startGame(P.newRoom(), n);
     });
+    // Allein gegen den Computer (Kasten aus dem gemeinsamen Kern)
+    P.cpuBox($('home-form').querySelector('button[type=submit]'), { input, btnClass: 'secondary', onStart(_l, n) { startGame(P.room, n); } });
     loadHistory();
   }
 

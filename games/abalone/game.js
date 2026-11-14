@@ -6,6 +6,7 @@ const colorOf = (seat, round) => ((seat + Math.max(round, 1) - 1) % 2) + 1;
 const seatOf = (color, round) => (colorOf(0, round) === color ? 0 : 1);
 
 module.exports = {
+  bot: require('./bot.js')(colorOf),
   title: 'Abalone',
   blurb: 'Schieb sechs Kugeln deines Mitspielers vom Brett.',
 
