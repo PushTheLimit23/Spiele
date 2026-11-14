@@ -45,7 +45,7 @@
   .cpu-badge { position: absolute; top: 18px; right: 18px; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
     background: var(--card); color: var(--accent); box-shadow: 0 2px 8px rgba(30, 30, 40, .25); font-style: normal; }
   .card .cpu-badge svg, .legend svg { width: 19px; height: 19px; aspect-ratio: auto; border-radius: 0; }
-  .legend { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: .88rem; margin: 2px 0 0; }
+  .legend { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: .88rem; margin: 10px 0 0; }
   .legend i { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--card); color: var(--accent); border: 1px solid var(--line); flex: none; }
   .legend[hidden] { display: none; }
   .card span { font-size: .85rem; color: var(--muted); line-height: 1.35; }
@@ -68,6 +68,7 @@
 
   <label for="name">Dein Name (gilt für alle Spiele)</label>
   <input id="name" maxlength="20" autocomplete="nickname" placeholder="Dein Name">
+  <p class="legend" id="legend" hidden><i aria-hidden="true"></i>Auch allein gegen den Computer spielbar</p>
 
   <div class="games" id="games">
     <a class="card" href="/vier/">
@@ -147,7 +148,6 @@
       <b>Carrom</b><span>Steine schnippen, Königin abdecken, alle neun versenken.</span>
     </a>
   </div>
-  <p class="legend" id="legend" hidden><i aria-hidden="true"></i>Auch allein gegen den Computer spielbar</p>
 
   <div id="history" hidden></div>
 </main>
